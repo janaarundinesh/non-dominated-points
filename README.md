@@ -160,7 +160,7 @@ Weight : 6, Profit : 15
 ### Clone Repository
 
 ```bash
-git clone https://github.com/<your-username>/pareto-knapsack-thesis.git
+git clone https://github.com/janaarundinesh/non-dominated-points.git
 cd non-dominated-points
 ```
 
