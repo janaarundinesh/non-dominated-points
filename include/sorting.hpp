@@ -2,4 +2,4 @@
 #include<vector>
 #include "item.hpp"
 
-std::vector<Item> Asc_Sort(std::vector<Item> items);
+void Asc_Sort(std::vector<Item>& items);

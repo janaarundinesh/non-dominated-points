@@ -13,4 +13,5 @@ add_executable(
     src/knapsack.cpp
     src/dominance.cpp
     src/sorting.cpp
+    src/maxprofitseen.cpp
 )

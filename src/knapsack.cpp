@@ -3,18 +3,29 @@
 
 std::vector<Item> ZeroOneKS(std::vector<Item> items)
 {
-    // 0/1 Knapsack:
     std::vector<Item> NonDominated;
 
-    for (int i = 0 ; i < items.size() ; i++)
+    for (int i = 0; i < items.size(); i++)
     {
-        if(dominates(items[i], items[i+1]))
+        bool dominatedFlag = false;
+
+        for (int j = 0; j < items.size(); j++)
+        {
+            if (i == j)
+                continue;
+
+            if (dominates(items[j], items[i]))
+            {
+                dominatedFlag = true;
+                break;
+            }
+        }
+
+        if (!dominatedFlag)
         {
             NonDominated.push_back(items[i]);
         }
-        else{
-            NonDominated.push_back(items[i+1]);
-        }
     }
+
     return NonDominated;
 }

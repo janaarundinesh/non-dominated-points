@@ -3,43 +3,38 @@
 #include "dominance.hpp"
 #include "knapsack.hpp"
 #include "sorting.hpp"
+#include "maxprofitseen.hpp"
 
 using namespace std;
 
 int main(){
-    cout << "Pareto Knapsack Thesis\n";
-
     //Generates Items as a vector ({w1,p1},..)
-    vector<Item> items = generateData(10);\
+    vector<Item> items = generateData(10);
 
-    // Sort items Accorrding to Weight
-    items = Asc_Sort(items);
+    /* 0/1 Knapsack: conventional method */ 
 
-    //Item Print
+    // items = ZeroOneKS(items);
+
+    //Print: Generated Items
+    cout << "Generated Items\n\n";
     for (const auto& item : items)
     {
         cout << "Weight : " << item.weight 
             << ", Profit : " << item.profit 
             << "\n";
     }
-    cout << "\n";
 
-    //Compare each item against every other item O(n^2)
-    // for (int i = 0; i < items.size(); i++)
-    // {
-    //     for (int j = 0; j < items.size(); j++)
-    //     {
-    //         if(i == j)
-    //         {
-    //             continue;
-    //         }
-    //         bool dominance = dominates(
-//         items[i], items[j]);
-//     }
+    /* 0/1 Knapsack: Sweep and Filter method */
 
-    // 0/1 Knapsack:
+    // Sort items Accorrding to Weight:
+    Asc_Sort(items);
 
-    items = ZeroOneKS(items);
+    //Max Profit Seen method:
+    items = MaxProfitSeen(items);
+
+    /* Results Printing */
+
+    cout << "\nPareto Front (Sweep Filter)\n";
 
     for (const auto& item : items)
     {
