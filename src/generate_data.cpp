@@ -3,7 +3,7 @@
 
 using namespace std;
 
-vector<Item> generateData()
+vector<Item> generateData(int n)
 {
     vector<Item> items;
 
@@ -13,7 +13,7 @@ vector<Item> generateData()
     uniform_int_distribution<> weight_dist(1,20);
     uniform_int_distribution<> profit_dist(1, 30);
 
-    for (int i = 0 ; i < 10 ; i++){
+    for (int i = 0 ; i < n ; i++){
         Item item;
 
         item.weight = weight_dist(gen);

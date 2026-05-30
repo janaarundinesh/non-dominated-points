@@ -3,4 +3,4 @@
 #include "item.hpp"
 #include <vector>
 
-std::vector<Item> generateData();
+std::vector<Item> generateData(int n);

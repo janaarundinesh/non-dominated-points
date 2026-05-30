@@ -1,14 +1,16 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(ParetoKnapsack)
+project(NonDominatedPoints)
 
 set(CMAKE_CXX_STANDARD 17)
 
 include_directories(include)
 
 add_executable(
-    pareto_knapsack
+    non_dominated_points
     src/main.cpp
     src/generate_data.cpp
+    src/knapsack.cpp
     src/dominance.cpp
+    src/sorting.cpp
 )
