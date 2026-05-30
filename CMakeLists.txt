@@ -9,4 +9,6 @@ include_directories(include)
 add_executable(
     pareto_knapsack
     src/main.cpp
+    src/generate_data.cpp
+    src/dominance.cpp
 )
