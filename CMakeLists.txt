@@ -10,8 +10,6 @@ add_executable(
     non_dominated_points
     src/main.cpp
     src/generate_data.cpp
-    src/knapsack.cpp
-    src/dominance.cpp
+    src/print.cpp
     src/sorting.cpp
-    src/maxprofitseen.cpp
 )

@@ -1,5 +1,6 @@
 #pragma once
-#include<vector>
-#include "item.hpp"
 
-void Asc_Sort(std::vector<Item>& items);
+#include "item.hpp"
+#include <vector>
+
+void SortByLastCoordinate(std::vector<Item>& items);

@@ -1,48 +1,22 @@
-#include<iostream>
+#include <iostream>
+#include "item.hpp"
 #include "generate_data.hpp"
-#include "dominance.hpp"
-#include "knapsack.hpp"
+#include "print.hpp"
 #include "sorting.hpp"
-#include "maxprofitseen.hpp"
 
 using namespace std;
 
-int main(){
-    //Generates Items as a vector ({w1,p1},..)
-    vector<Item> items = generateData(10);
+int main()
+{
+    vector<Item> items = generateData(6, 10);
 
-    /* 0/1 Knapsack: conventional method */ 
+    /* Prints the Data Generated*/
+    printItems(items);
 
-    // items = ZeroOneKS(items);
+    /* Sorts the Last Co-ordinates in Asc Order*/
+    SortByLastCoordinate(items);
 
-    //Print: Generated Items
-    cout << "Generated Items\n\n";
-    for (const auto& item : items)
-    {
-        cout << "Weight : " << item.weight 
-            << ", Profit : " << item.profit 
-            << "\n";
-    }
-
-    /* 0/1 Knapsack: Sweep and Filter method */
-
-    // Sort items Accorrding to Weight:
-    Asc_Sort(items);
-
-    //Max Profit Seen method:
-    items = MaxProfitSeen(items);
-
-    /* Results Printing */
-
-    cout << "\nPareto Front (Sweep Filter)\n";
-
-    for (const auto& item : items)
-    {
-        cout << "Weight : " << item.weight 
-            << ", Profit : " << item.profit 
-            << "\n";
-    }
+    printItems(items);
 
     return 0;
-}
-
+};

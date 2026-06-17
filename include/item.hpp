@@ -1,6 +1,6 @@
 #pragma once
-
+#include <vector>
+ 
 struct Item {
-    int weight;
-    int profit;
+    std::vector<int> coords; // coords[0]..coords[d-1]
 };
