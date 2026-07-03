@@ -10,3 +10,13 @@ void SortByLastCoordinate(std::vector<Item>& items)
         }
     );
 }
+
+void SortByCoordinate(std::vector<Item>& items, size_t k)
+{
+    std::sort(items.begin(), items.end(),
+        [k](const Item& a, const Item& b)
+        {
+            return a.coords[k] < b.coords[k];
+        }
+    );
+}

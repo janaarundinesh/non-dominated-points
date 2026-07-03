@@ -15,7 +15,7 @@ SplitU(
 
     for(const auto& p : U)
     {
-        if(p.coords[d-2] <= threshold)
+        if(p.coords[d-1] <= threshold)
         {
             U1.push_back(p);
         }

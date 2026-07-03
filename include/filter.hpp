@@ -13,3 +13,9 @@ std::vector<Item> FILTER2(
     const std::vector<Item>& U,
     const std::vector<Item>& V
 );
+
+std::vector<Item> WeakCoverFilter(
+    const std::vector<Item>& U,
+    const std::vector<Item>& V,
+    size_t k
+);

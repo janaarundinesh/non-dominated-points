@@ -5,13 +5,13 @@ int ThresholdFromV1(
     size_t d
 )
 {
-    int xmax = V1[0].coords[d-2];
+    int xmax = V1[0].coords[d-1];
 
     for(const auto& p : V1)
     {
-        if(p.coords[d-2] > xmax)
+        if(p.coords[d-1] > xmax)
         {
-            xmax = p.coords[d-2];
+            xmax = p.coords[d-1];
         }
     }
 

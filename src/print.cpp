@@ -9,7 +9,7 @@ void printItems(const vector<Item>& items)
     {
         cout << "(";
 
-        for (int i = 0; i < item.coords.size(); i++)
+        for (size_t i = 0; i < item.coords.size(); i++)
         {
             cout << item.coords[i];
 
@@ -19,4 +19,5 @@ void printItems(const vector<Item>& items)
 
         cout << ")\n";
     }
+    cout << items.size() << " points total.\n";
 }

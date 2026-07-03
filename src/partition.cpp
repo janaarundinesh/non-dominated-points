@@ -2,9 +2,9 @@
 #include <algorithm>
 
 std::pair<std::vector<Item>,std::vector<Item>>
-    PartitionV(std::vector<Item> V)
+    PartitionV(std::vector<Item> V, size_t d)
 {
-    SortByLastCoordinate(V);
+    SortByCoordinate(V, d - 1);
 
     size_t mid = V.size()/2;
 
@@ -13,4 +13,4 @@ std::pair<std::vector<Item>,std::vector<Item>>
     std::vector<Item> V2(V.begin()+mid,V.end());
 
     return {V1,V2};
-}  
+}

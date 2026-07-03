@@ -7,4 +7,4 @@ std::pair<
     std::vector<Item>,
     std::vector<Item>
 >
-PartitionV(std::vector<Item> V);
+PartitionV(std::vector<Item> V, size_t d);
