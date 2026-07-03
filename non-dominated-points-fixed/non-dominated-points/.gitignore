@@ -1,0 +1,16 @@
+build/
+.vscode/
+*.o
+*.exe
+*.out
+*.obj
+
+__pycache__/
+
+cmake-build-debug/
+cmake-build-release/
+CMakeFiles/
+CMakeCache.txt
+Makefile
+
+.idea/

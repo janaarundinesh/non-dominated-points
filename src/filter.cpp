@@ -10,25 +10,39 @@ std::vector<Item> FILTER2(
     const std::vector<Item>& V
 )
 {
+    std::vector<Item> Us = U;
+    std::vector<Item> Vs = V;
+
+    SortByLastCoordinate(Us);
+    SortByLastCoordinate(Vs);
+
     std::vector<Item> survivors;
 
-    for(const auto& u : U)
+    int i = static_cast<int>(Us.size()) - 1;
+    int j = static_cast<int>(Vs.size()) - 1;
+
+    int maxXSeen = std::numeric_limits<int>::min();
+
+    while(i >= 0)
     {
-        bool dominated = false;
-
-        for(const auto& v : V)
+        while(j >= 0 &&
+              Vs[j].coords[1] >= Us[i].coords[1])
         {
-            if(Dominates(v,u,2))
-            {
-                dominated = true;
-                break;
-            }
+            maxXSeen =
+                std::max(
+                    maxXSeen,
+                    Vs[j].coords[0]
+                );
+
+            j--;
         }
 
-        if(!dominated)
+        if(maxXSeen < Us[i].coords[0])
         {
-            survivors.push_back(u);
+            survivors.push_back(Us[i]);
         }
+
+        i--;
     }
 
     return survivors;
@@ -55,7 +69,7 @@ std::vector<Item> FILTER(
         return FILTER2(U,V);
     }
 
-    auto [V1,V2] = PartitionV(V,d);
+    auto [V1,V2] = PartitionV(V);
 
     int threshold = ThresholdFromV1(V1,d);
 

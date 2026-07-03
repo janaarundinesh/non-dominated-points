@@ -4,7 +4,7 @@
 std::pair<std::vector<Item>,std::vector<Item>>
     PartitionV(std::vector<Item> V)
 {
-    SortByLastCoordinate(std::vector<Item>& V);
+    SortByLastCoordinate(V);
 
     size_t mid = V.size()/2;
 
