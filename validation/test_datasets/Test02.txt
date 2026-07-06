@@ -1,0 +1,15 @@
+# Dimension
+2
+
+# Number of Input Points
+2
+
+# Input Points
+1 1
+2 2
+
+# Number of Expected Maxima
+1
+
+# Expected Maxima
+2 2
