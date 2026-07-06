@@ -4,6 +4,7 @@ build/
 *.exe
 *.out
 *.obj
+.DS_Store
 
 __pycache__/
 

@@ -67,10 +67,6 @@ std::vector<Item> FILTER2(
 
     size_t j = 0; // next Vs index to absorb
 
-    // bestX_strict: best x among absorbed v's with y strictly greater
-    //               than the y of whatever u we're currently testing.
-    //               Such a v dominates u whenever vx >= ux (the y is
-    //               already a strict improvement).
     int bestX_strict = std::numeric_limits<int>::min();
 
     size_t i = 0;
@@ -86,9 +82,6 @@ std::vector<Item> FILTER2(
             j++;
         }
 
-        // Collect, separately, every v tied exactly at this y -- these
-        // only dominate a u at this same y if their x is strictly
-        // greater (since y is merely equal, not an improvement).
         int bestX_eq = std::numeric_limits<int>::min();
 
         size_t k = j;
@@ -115,9 +108,6 @@ std::vector<Item> FILTER2(
             i++;
         }
 
-        // This y-group's v's (the ones just collected into bestX_eq)
-        // are now strictly greater than y for any subsequent (smaller)
-        // u's y, so fold them into bestX_strict before moving on.
         bestX_strict = std::max(bestX_strict, bestX_eq);
 
         j = k;
@@ -144,10 +134,6 @@ std::vector<Item> FILTER(
 
     if(V.size() == 1)
     {
-        // With a single v, u survives iff v does not dominate it.
-        // (Also sidesteps PartitionV ever being asked to split a
-        // 1-element V, which would leave V1 empty and crash
-        // ThresholdFromV1.)
         const Item& v = V[0];
 
         std::vector<Item> survivors;

@@ -5,9 +5,7 @@
 
 
 static std::vector<Item> BruteForceMaxima(
-    const std::vector<Item>& points,
-    size_t d
-)
+    const std::vector<Item>& points, size_t d)
 {
     std::vector<Item> result;
 
@@ -35,10 +33,7 @@ static std::vector<Item> BruteForceMaxima(
     return result;
 }
 
-std::vector<Item> MAXIMA2(
-    std::vector<Item> points,
-    size_t d
-)
+std::vector<Item> MAXIMA2(std::vector<Item> points, size_t d)
 {
     if(points.size() <= 1)
     {
@@ -58,15 +53,9 @@ std::vector<Item> MAXIMA2(
         return BruteForceMaxima(points, d);
     }
 
-    std::vector<Item> S1(
-        points.begin(),
-        points.begin()+mid
-    );
+    std::vector<Item> S1(points.begin(), points.begin()+mid);
 
-    std::vector<Item> S2(
-        points.begin()+mid,
-        points.end()
-    );
+    std::vector<Item> S2(points.begin()+mid, points.end());
 
     auto M1 = MAXIMA2(S1,d);
     auto M2 = MAXIMA2(S2,d);
@@ -78,11 +67,6 @@ std::vector<Item> MAXIMA2(
     
     auto survivors = WeakCoverFilter(M1, M2, d - 1);
 
-    survivors.insert(
-        survivors.end(),
-        M2.begin(),
-        M2.end()
-    );
-
+    survivors.insert(survivors.end(), M2.begin(), M2.end());
     return survivors;
 }

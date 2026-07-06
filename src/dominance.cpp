@@ -1,10 +1,6 @@
 #include "dominance.hpp"
 
-bool Dominates(
-    const Item& a,
-    const Item& b,
-    size_t d
-)
+bool Dominates(const Item& a, const Item& b, size_t d)
 {
     bool strict = false;
 

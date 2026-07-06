@@ -8,7 +8,7 @@ using namespace std;
 
 int main()
 {
-    size_t Dim = 6, NPoints = 100;
+    size_t Dim = 10, NPoints = 1000;
 
     vector<Item> items = generateData(NPoints, Dim);
 
