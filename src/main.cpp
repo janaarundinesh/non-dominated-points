@@ -32,24 +32,19 @@ int main()
 
             for (int i = 0; i < num_iterations; ++i)
             {
-                vector<Item> items = Originalitems; // Copy the original items for each iteration
+                vector<Item> items = Originalitems; // Copies the original items for each iteration
 
                 auto start = chrono::high_resolution_clock::now();
 
-                //cout << "Generated " << NPoints << " points in " << Dim << "D:\n";
-                //printItems(items);
-
                 auto maxima = MAXIMA2(items, Dim);
-
-                //cout << "\nNon-dominated points:\n";
-                //printItems(maxima);
 
                 auto stop = chrono::high_resolution_clock::now();
 
                 double elapsed = chrono::duration<double, micro>(stop - start).count();
-                //cout << "Time taken: " << elapsed << " microseconds\n";
+
                 execution_times.push_back(elapsed);
             }
+            
             // Calculate average time
             double average_time = 0.0;
             for (double t : execution_times)
