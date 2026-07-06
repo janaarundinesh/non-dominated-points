@@ -20,3 +20,20 @@ add_executable(
     src/intersection.cpp
     src/filter.cpp
 )
+
+add_executable(
+    validator
+
+    validation/validation_main.cpp
+    validation/validator.cpp
+
+    src/print.cpp
+    src/maxima2.cpp
+    src/filter.cpp
+    src/dominance.cpp
+    src/sorting.cpp
+    src/partition.cpp
+    src/threshold.cpp
+    src/split_u.cpp
+    src/intersection.cpp
+)

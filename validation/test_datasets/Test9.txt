@@ -12,7 +12,8 @@
 1 1
 
 # Number of Expected Maxima
-1
+2
 
 # Expected Maxima
+3 3
 3 3

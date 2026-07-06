@@ -1,6 +1,15 @@
 #pragma once
 
 #include <vector>
-struct Item;
+#include <string>
 
-bool ValidateMaxima(const std::vector<Item>& originalItems, const std::vector<Item>& maxima, size_t dimension);
+#include "item.hpp"
+
+struct ValidationDataset
+{
+    size_t dimension;
+    std::vector<Item> inputPoints;
+    std::vector<Item> expectedMaxima;
+};
+
+ValidationDataset LoadDataset(const std::string& filename);
