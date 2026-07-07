@@ -35,6 +35,8 @@ static std::vector<Item> BruteForceMaxima(
 
 std::vector<Item> MAXIMA2(std::vector<Item> points, size_t d)
 {
+    SortByLastCoordinate(points);
+
     if(points.size() <= 1)
     {
         return points;

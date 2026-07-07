@@ -10,7 +10,7 @@ int main()
 {
     for (int i = 1; i <= 10; i++)
     {
-        ValidationDataset dataset =LoadDataset("../validation/test_datasets/test" + std::to_string(i) + ".txt");
+        ValidationDataset dataset =LoadDataset("../validation/test_datasets/Test" + std::to_string(i) + ".txt");
 
         cout << "==================== Test Dataset " << i << " ====================\n";
 
