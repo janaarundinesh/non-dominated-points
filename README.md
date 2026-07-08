@@ -1,51 +1,58 @@
-# Non-Dominated-Points Thesis Project
+# Non-Dominated Points (Maxima of a Point Set)
 
-A C++ implementation and experimental study of Pareto-based filtering techniques for the **0/1 Knapsack Problem**.
+A C++17 implementation and experimental study of the **maxima-of-a-point-set problem**: given N points in d-dimensional space, find all points that are not dominated by any other point (the "non-dominated" or "Pareto-optimal" points).
 
-This project explores how dominance relations and Pareto-optimal filtering can be used to reduce the search space of candidate solutions. The implementation includes both a conventional dominance-checking approach and an optimized **Sweep-and-Filter** method based on Pareto efficiency.
+The project implements the divide-and-conquer **MAXIMA2** algorithm and its **FILTER** merge-step subroutine, following the classical treatment of the maxima problem in computational geometry (Preparata & Shamos, *Computational Geometry: An Introduction*).
 
 ---
 
 ## Project Overview
 
-The 0/1 Knapsack Problem is a classical combinatorial optimization problem where a subset of items must be selected to maximize profit while respecting a weight constraint.
+Given a set $S$ of $N$ points in $E^d$, a point $p$ **dominates** a point $q$ if $p$ is greater than or equal to $q$ in every coordinate, with strict inequality in at least one. A point is a **maximum** of $S$ if no other point in $S$ dominates it. The maxima problem asks for all such points.
 
-This thesis investigates:
+This project investigates:
 
-- Pareto dominance concepts
-- Non-dominated item filtering
-- Sweep-and-Filter techniques
-- Performance improvements over brute-force dominance checking
-- Practical implementation in modern C++
+- Dominance relations between points
+- Divide-and-conquer computation of maxima (`MAXIMA2`)
+- The recursive `FILTER` merge routine and its 2D sweep base case (`FILTER2`)
+- Empirical runtime behavior across dimension and input size
+- Validation against hand-constructed test datasets
 
 ---
 
 ## Repository Structure
 
 ```text
-pareto-knapsack-thesis/
+non-dominated-points/
 │
 ├── src/
-│   ├── main.cpp
-│   ├── generate_data.cpp
-│   ├── dominance.cpp
-│   ├── sorting.cpp
-│   ├── maxprofitseen.cpp
-│   └── knapsack.cpp
+│   ├── main.cpp            # Benchmark driver
+│   ├── generate_data.cpp   # Random point generation
+│   ├── dominance.cpp       # Dominance predicate
+│   ├── sorting.cpp         # Coordinate-based sorting helpers
+│   ├── maxima2.cpp         # MAXIMA2 divide-and-conquer algorithm
+│   ├── filter.cpp          # FILTER / FILTER2 merge-step routines
+│   ├── partition.cpp       # Equipartition of V for FILTER
+│   ├── split_u.cpp         # Threshold-based split of U for FILTER
+│   ├── threshold.cpp       # Threshold extraction from V1
+│   ├── intersection.cpp    # Set intersection helper
+│   └── print.cpp           # Console output helpers
 │
-├── include/
-│   ├── Item.hpp
-│   ├── generate_data.hpp
-│   ├── dominance.hpp
-│   ├── sorting.hpp
-│   ├── maxprofitseen.hpp
-│   └── knapsack.hpp
+├── include/                # Corresponding headers
 │
-├── build/
+├── validation/
+│   ├── validator.cpp/.hpp  # Loads hand-crafted test datasets
+│   ├── validation_main.cpp # Runs MAXIMA2 against expected output
+│   └── test_datasets/      # Test1.txt .. Test10.txt
 │
-├── docs/
-│   └── thesis_documentation
+├── plots/
+│   ├── plot_results.py     # Generates runtime plots from benchmark CSV
+│   └── figures/            # Output plots
 │
+├── results/
+│   └── benchmark_results.csv
+│
+├── build/                  # CMake build directory
 └── README.md
 ```
 
@@ -53,99 +60,39 @@ pareto-knapsack-thesis/
 
 ## Implemented Concepts
 
-### 1. Random Item Generation
+### 1. Dominance Relation
 
-Generates a collection of items with:
-
-- Weight
-- Profit
-
-Example:
-
-| Weight   | Profit   |
-|----------|----------|
-| 5        | 12       |
-| 7        | 20       |
-| 3        | 9        |
-
----
-
-### 2. Dominance Relation
-
-An item **A** dominates item **B** if:
+Point $p$ dominates point $q$ if:
 
 ```text
-A.weight ≤ B.weight
-A.profit ≥ B.profit
+p[i] >= q[i]   for all coordinates i
+p[i] >  q[i]   for at least one coordinate i
 ```
 
-with at least one strict inequality.
+A point that is dominated by any other point can never be a maximum and is discarded.
 
-Dominated items can be removed without affecting the optimal solution space.
+### 2. Random Point Generation
 
----
+`generateData(n, D)` produces `n` points with `D` integer coordinates, each drawn uniformly from `[1, 100]`, used to benchmark the algorithm across dimensions and input sizes.
 
-### 3. Conventional Dominance Filtering
+### 3. MAXIMA2 — Divide-and-Conquer Maxima
 
-A brute-force method that compares every item against all others.
+1. Sort the point set by its last coordinate.
+2. Split at the median (adjusted so that tied values on the split coordinate all land on the same side, preserving correctness).
+3. Recursively compute the maxima of each half.
+4. **Merge**: every maximum of the "upper" half survives automatically; a maximum of the "lower" half survives only if no point in the upper half's maxima dominates it on the remaining coordinates.
 
-Complexity:O(n²)
+### 4. FILTER — Recursive Merge Step
 
-```
+`FILTER(U, V, d)` computes, for two point sets `U` and `V`, the subset of `U` not dominated by any point of `V`. It recurses by equipartitioning `V` and splitting `U` at the corresponding threshold, bottoming out at a linear-time 2D sweep (`FILTER2`) once only two coordinates remain relevant.
 
-This approach serves as a correctness baseline.
+### 5. Validation
 
----
+`validator` loads hand-built datasets from `validation/test_datasets/` (input points plus their expected maxima) and checks `MAXIMA2`'s output against them.
 
-### 4. Sweep-and-Filter Method
+### 6. Benchmarking
 
-The optimized filtering strategy:
-
-1. Sort items by weight.
-2. Traverse from smallest to largest weight.
-3. Maintain the maximum profit encountered.
-4. Discard items that are dominated by previously seen items.
-
-Complexity:
-
-```
-Sorting : O(n log n)
-Sweep   : O(n)
-
-Total   : O(n log n)
-```
-
----
-
-## Example Workflow
-
-### Generated Items
-
-```
-Weight : 5, Profit : 9
-Weight : 2, Profit : 10
-Weight : 6, Profit : 15
-Weight : 3, Profit : 8
-Weight : 4, Profit : 12
-```
-
-### After Sorting
-
-```
-Weight : 2, Profit : 10
-Weight : 3, Profit : 8
-Weight : 4, Profit : 12
-Weight : 5, Profit : 9
-Weight : 6, Profit : 15
-```
-
-### After Sweep-and-Filter
-
-```
-Weight : 2, Profit : 10
-Weight : 4, Profit : 12
-Weight : 6, Profit : 15
-```
+`main.cpp` runs `MAXIMA2` over dimensions `2..10` and point counts `1,000..10,000`, averaging over 10 iterations per configuration, and writes timings to `results/benchmark_results.csv`. `plots/plot_results.py` then renders runtime curves into `plots/figures/`.
 
 ---
 
@@ -153,142 +100,65 @@ Weight : 6, Profit : 15
 
 ### Prerequisites
 
-- C++17 or later
-- CMake (recommended)
-- GCC / Clang / MSVC
-
-### Clone Repository
-
-```bash
-git clone https://github.com/janaarundinesh/non-dominated-points.git
-cd non-dominated-points
-```
+- C++17-capable compiler (GCC / Clang / MSVC)
+- CMake ≥ 3.10
+- Python 3 (for plotting benchmark results)
 
 ### Build
 
 ```bash
-mkdir build
+mkdir -p build
 cd build
-
 cmake ..
 cmake --build .
 ```
 
+This produces two executables:
+
+| Executable              | Purpose                                              |
+|--------------------------|-------------------------------------------------------|
+| `non_dominated_points`   | Runs the benchmark suite and generates runtime plots   |
+| `validator`              | Runs `MAXIMA2` against the hand-crafted test datasets  |
+
 ### Run
 
 ```bash
-./non-dominated-points
+./non_dominated_points   # benchmark + plot generation
+./validator               # correctness validation against test datasets
 ```
 
 ---
 
 ## Experimental Results
 
-### Comparison of Filtering Approaches
+Benchmark results are stored in `results/benchmark_results.csv` and visualized in `plots/figures/runtime.png`, showing execution time as a function of point count for each tested dimension.
 
-| Method | Complexity |
-|----------|----------|
-| Conventional Dominance Check | O(n²) |
-| Sweep-and-Filter | O(n log n) |
-
-<!-- TODO: Insert performance comparison table -->
-
-<!-- TODO: Insert benchmark screenshots -->
-
-<!-- TODO: Insert execution time graphs -->
-
-<!-- TODO: Insert memory consumption analysis -->
+<!-- TODO: Insert discussion of observed scaling behavior vs. theoretical bound -->
 
 ---
 
-## Sample Output
+## Future Scope
 
-<!-- TODO: Insert terminal output screenshot -->
+Planned extensions to this work:
 
-<!-- TODO: Insert example generated dataset -->
-
-<!-- TODO: Insert filtered Pareto frontier output -->
-
----
-
-## Algorithm Visualization
-
-### Dominance Filtering
-
-<!-- TODO: Insert dominance relation diagram -->
-
-### Sweep-and-Filter Process
-
-<!-- TODO: Insert sweep-and-filter workflow diagram -->
-
-### Pareto Frontier
-
-<!-- TODO: Insert Pareto frontier graph -->
-
----
-
-## Thesis Objectives
-
-- Understand Pareto dominance in optimization.
-- Implement efficient filtering strategies.
-- Compare brute-force and optimized approaches.
-- Evaluate computational complexity.
-- Analyze scalability for larger datasets.
-
----
-
-## Future Work
-
-Potential extensions include:
-
-- Complete dynamic programming implementation for 0/1 Knapsack.
-- Pareto-optimal state-space reduction.
-- Multi-objective knapsack variants.
-- Parallelized filtering algorithms.
-- Large-scale benchmarking.
-
----
-
-## Documentation
-
-<!-- TODO: Add link to thesis PDF -->
-
-<!-- TODO: Add link to presentation slides -->
-
-<!-- TODO: Add link to final report -->
+- **MPI (OpenMPI) implementation** — distribute the divide-and-conquer recursion of `MAXIMA2` / `FILTER` across multiple processes, with a focus on load-balanced merge steps.
+- **CUDA implementation** — parallelize the dominance checks and the sweep/merge steps on the GPU for large point sets.
+- **Performance evaluation**: measure **speedup** and **scale-up** of the parallel (MPI/CUDA) versions relative to the sequential baseline, across varying:
+  - number of points $N$
+  - dimension $d$
+  - number of processes / threads / GPU cores
+- Comparison of strong scaling vs. weak scaling behavior for both parallelization strategies.
 
 ---
 
 ## Author
 
 **Arun Dinesh Jana**
-
-Master's Thesis Project
-
-<!-- TODO: Add university name -->
-
-<!-- TODO: Add department/program -->
-
-<!-- TODO: Add supervisor information -->
+Matrikel-Nr.: 2227229
+Bergische Universität Wuppertal
 
 ---
 
 ## License
 
 This project is intended for academic and research purposes.
-
-<!-- TODO: Add chosen license (MIT, GPL, Apache 2.0, etc.) -->
-
----
-
-## Acknowledgements
-
-Special thanks to:
-
-<!-- TODO: Add supervisor acknowledgement -->
-
-<!-- TODO: Add university acknowledgement -->
-
-<!-- TODO: Add research group acknowledgement -->
-
----
