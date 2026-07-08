@@ -7,47 +7,6 @@
 #include <limits>
 #include <algorithm>
 
-std::vector<Item> WeakCoverFilter(
-    const std::vector<Item>& U,
-    const std::vector<Item>& V,
-    size_t k
-)
-{
-    std::vector<Item> survivors;
-
-    for(const auto& u : U)
-    {
-        bool covered = false;
-
-        for(const auto& v : V)
-        {
-            bool weaklyCoversPrefix = true;
-
-            for(size_t i = 0; i < k; i++)
-            {
-                if(v.coords[i] < u.coords[i])
-                {
-                    weaklyCoversPrefix = false;
-                    break;
-                }
-            }
-
-            if(weaklyCoversPrefix && v.coords != u.coords)
-            {
-                covered = true;
-                break;
-            }
-        }
-
-        if(!covered)
-        {
-            survivors.push_back(u);
-        }
-    }
-
-    return survivors;
-}
-
 std::vector<Item> FILTER2(
     const std::vector<Item>& U,
     const std::vector<Item>& V
@@ -56,8 +15,6 @@ std::vector<Item> FILTER2(
     std::vector<Item> Us = U;
     std::vector<Item> Vs = V;
 
-    // Sort descending by y (coords[1]), so we sweep from the largest y
-    // down to the smallest, absorbing V points as we go.
     SortByCoordinate(Us, 1);
     SortByCoordinate(Vs, 1);
     std::reverse(Us.begin(), Us.end());
@@ -191,7 +148,7 @@ std::vector<Item> FILTER(
 
     auto B = FILTER(U1,V1,d);
 
-    auto C = WeakCoverFilter(U1,V2,d-1);
+    auto C = FILTER(U1,V2,d-1);
 
     auto BC = Intersect(B,C);
 

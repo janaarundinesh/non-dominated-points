@@ -67,7 +67,7 @@ std::vector<Item> MAXIMA2(std::vector<Item> points, size_t d)
         return M2;
     }
     
-    auto survivors = WeakCoverFilter(M1, M2, d - 1);
+    auto survivors = FILTER(M1, M2, d - 1);
 
     survivors.insert(survivors.end(), M2.begin(), M2.end());
     return survivors;
