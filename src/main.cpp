@@ -13,9 +13,9 @@ int main()
 {
     //size_t Dim = 10, NPoints = 1000;
 
-    const vector<size_t> dims = {2, 3, 4, 5, 6, 7, 8, 9, 10};
+    const vector<size_t> dims = {10};
 
-    const vector<size_t> npoints = {1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000};
+    const vector<size_t> npoints = {100, 500, 1000, 5000, 10000, 50000, 100000};
 
     ofstream csv_file("../results/benchmark_results.csv");
     csv_file << "Dimension,NPoints,ExecutionTime_us\n";
@@ -24,9 +24,9 @@ int main()
     {
         for (size_t NPoints : npoints)
         {
-            //repeat 10 times and take average time
+            //repeat  times and take average time
             vector<double> execution_times;
-            const int num_iterations = 10;
+            const int num_iterations = 3;
 
             vector<Item> Originalitems = generateData(NPoints, Dim);
 

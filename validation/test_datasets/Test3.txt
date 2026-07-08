@@ -12,5 +12,5 @@
 2
 
 # Expected Maxima
-1 5
 5 1
+1 5

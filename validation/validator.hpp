@@ -13,3 +13,5 @@ struct ValidationDataset
 };
 
 ValidationDataset LoadDataset(const std::string& filename);
+
+bool CompareMaxima(const std::vector<Item>& computed, const std::vector<Item>& expected);

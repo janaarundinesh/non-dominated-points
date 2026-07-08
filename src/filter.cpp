@@ -6,6 +6,7 @@
 #include "intersection.hpp"
 #include <limits>
 #include <algorithm>
+#include "debug.hpp"
 
 std::vector<Item> FILTER2(
     const std::vector<Item>& U,
@@ -73,12 +74,10 @@ std::vector<Item> FILTER2(
     return survivors;
 }
 
-std::vector<Item> FILTER(
-    const std::vector<Item>& U,
-    const std::vector<Item>& V,
-    size_t d
-)
+std::vector<Item> FILTER(const std::vector<Item>& U, const std::vector<Item>& V, size_t d)
 {
+    DEBUG_PRINT("FILTER("<< "d=" << d << ", U=" << U.size() << ", V=" << V.size()<< ")");
+
     if(U.empty())
     {
         return {};
@@ -135,28 +134,43 @@ std::vector<Item> FILTER(
 
     if(d == 2)
     {
+        DEBUG_PRINT("Reachead FILTER2 " << "U=" << U.size() << " V=" << V.size());
+
         return FILTER2(U,V);
     }
 
     auto [V1,V2] = PartitionV(V,d);
 
+    DEBUG_PRINT("PartitionV -> "<< "V1=" << V1.size()<< " V2=" << V2.size());
+
     int threshold = ThresholdFromV1(V1,d);
 
     auto [U1,U2] = SplitU(U,threshold,d);
 
-    auto A = FILTER(U2,V2,d);
+    DEBUG_PRINT("SplitU -> "<< "U1=" << U1.size()<< " U2=" << U2.size());
 
-    auto B = FILTER(U1,V1,d);
+    std::vector<Item> A;
+    std::vector<Item> B;
+    std::vector<Item> C;
 
-    auto C = FILTER(U1,V2,d-1);
+    if (!U2.empty() && !V2.empty())
+        A = FILTER(U2, V2, d);
+    else
+        A = U2;
+
+    if (!U1.empty() && !V1.empty())
+        B = FILTER(U1, V1, d);
+    else
+        B = U1;
+
+    if (!U1.empty() && !V2.empty())
+        C = FILTER(U1, V2, d - 1);
+    else
+        C = U1;
 
     auto BC = Intersect(B,C);
 
-    A.insert(
-        A.end(),
-        BC.begin(),
-        BC.end()
-    );
+    A.insert(A.end(), BC.begin(), BC.end());
 
     return A;
 }
