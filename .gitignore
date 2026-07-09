@@ -4,7 +4,8 @@ build/
 *.exe
 *.out
 *.obj
-.DS_Store
+*.DS_Store
+*.tex
 
 __pycache__/
 
