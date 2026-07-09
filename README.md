@@ -26,17 +26,17 @@ This project investigates:
 non-dominated-points/
 │
 ├── src/
-│   ├── main.cpp            # Benchmark driver
+│   ├── main.cpp            
 │   ├── generate_data.cpp   # Random point generation
-│   ├── dominance.cpp       # Dominance predicate
+│   ├── dominance.cpp       # Dominance
 │   ├── sorting.cpp         # Coordinate-based sorting helpers
-│   ├── maxima2.cpp         # MAXIMA2 divide-and-conquer algorithm
-│   ├── filter.cpp          # FILTER / FILTER2 merge-step routines
+│   ├── maxima2.cpp         # divide-and-conquer algorithm
+│   ├── filter.cpp          # FILTER / FILTER2
 │   ├── partition.cpp       # Equipartition of V for FILTER
 │   ├── split_u.cpp         # Threshold-based split of U for FILTER
 │   ├── threshold.cpp       # Threshold extraction from V1
-│   ├── intersection.cpp    # Set intersection helper
-│   └── print.cpp           # Console output helpers
+│   ├── intersection.cpp    # intersection
+│   └── print.cpp           # Console output helper
 │
 ├── include/                # Corresponding headers
 │
