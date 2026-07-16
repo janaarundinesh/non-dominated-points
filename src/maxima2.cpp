@@ -1,37 +1,7 @@
 #include "maxima2.hpp"
 #include "sorting.hpp"
 #include "filter.hpp"
-#include "dominance.hpp"
-
-
-static std::vector<Item> BruteForceMaxima(
-    const std::vector<Item>& points, size_t d)
-{
-    std::vector<Item> result;
-
-    for(size_t i = 0; i < points.size(); i++)
-    {
-        bool dominated = false;
-
-        for(size_t j = 0; j < points.size(); j++)
-        {
-            if(i == j) continue;
-
-            if(Dominates(points[j], points[i], d))
-            {
-                dominated = true;
-                break;
-            }
-        }
-
-        if(!dominated)
-        {
-            result.push_back(points[i]);
-        }
-    }
-
-    return result;
-}
+#include "brute_force_maxima.hpp"
 
 std::vector<Item> MAXIMA2(std::vector<Item> points, size_t d)
 {

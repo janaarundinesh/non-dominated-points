@@ -14,6 +14,7 @@ add_executable(
     src/sorting.cpp
     src/dominance.cpp
     src/maxima2.cpp
+    src/brute_force_maxima.cpp
     src/partition.cpp
     src/threshold.cpp
     src/split_u.cpp
@@ -29,6 +30,7 @@ add_executable(
 
     src/print.cpp
     src/maxima2.cpp
+    src/brute_force_maxima.cpp
     src/filter.cpp
     src/dominance.cpp
     src/sorting.cpp
