@@ -6,6 +6,7 @@ build/
 *.obj
 *.DS_Store
 *.tex
+*.pdf
 
 __pycache__/
 

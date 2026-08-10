@@ -21,6 +21,11 @@ add_executable(
     src/intersection.cpp
     src/filter.cpp
 )
+target_compile_options(non_dominated_points PRIVATE
+    -O3
+    -g
+    -fno-omit-frame-pointer
+)
 
 add_executable(
     validator
