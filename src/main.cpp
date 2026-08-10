@@ -1,73 +1,64 @@
 #include <iostream>
 #include <vector>
 #include "item.hpp"
-#include "generate_data.hpp"
 #include "print.hpp"
 #include "maxima2.hpp"
 #include <chrono>
 #include <fstream>
+#include <filesystem>
 
 using namespace std;
 
-int main()
+int main(int argc, char* argv[])
 {
-    //size_t Dim = 10, NPoints = 1000;
-
-    const vector<size_t> dims = {10};
-
-    const vector<size_t> npoints = {100, 500, 1000, 5000, 10000, 50000, 100000};
-
-    ofstream csv_file("../results/benchmark_results.csv");
-    csv_file << "Dimension,NPoints,ExecutionTime_us\n";
-
-    for (size_t Dim : dims)
+    if (argc != 2)
     {
-        for (size_t NPoints : npoints)
+        cerr << "Usage: " << argv[0] << " <dataset_file>\n";
+        return 1;
+    }
+
+    string filename = argv[1];
+
+    ifstream file(filename);
+
+    if (!file)
+    {
+        cerr << "Could not open dataset: " << filename << '\n';
+        return 1;
+    }
+
+    size_t Dim, NPoints;
+
+    file >> Dim >> NPoints;
+
+    vector<Item> items(NPoints);
+
+    for (size_t i = 0; i < NPoints; ++i)
+    {
+        items[i].coords.resize(Dim);
+
+        for (size_t d = 0; d < Dim; ++d)
         {
-            //repeat  times and take average time
-            vector<double> execution_times;
-            const int num_iterations = 3;
-
-            vector<Item> Originalitems = generateData(NPoints, Dim);
-
-            for (int i = 0; i < num_iterations; ++i)
-            {
-                vector<Item> items = Originalitems; // Copies the original items for each iteration
-
-                auto start = chrono::high_resolution_clock::now();
-
-                auto maxima = MAXIMA2(items, Dim);
-
-                auto stop = chrono::high_resolution_clock::now();
-
-                double elapsed = chrono::duration<double, micro>(stop - start).count();
-
-                execution_times.push_back(elapsed);
-            }
-            
-            // Calculate average time
-            double average_time = 0.0;
-            for (double t : execution_times)
-            {
-                average_time += t;
-            }
-            average_time /= execution_times.size();
-            csv_file << Dim << "," << NPoints << "," << average_time << "\n";
+            file >> items[i].coords[d];
         }
     }
-    csv_file.close();
-    cout << "Benchmark results saved to ../results/benchmark_results.csv\n";
-    cout << "\nGenerating Plots...\n";
 
-    int status = system("python3 ../plots/plot_results.py");
+    file.close();
 
-    if (status == 0)
-    {
-        cout << "Plots generated successfully.\n";
-    }
-    else
-    {
-        cout << "Error generating plots.\n";
-    }
+    cout << "Dataset: " << filename << '\n';
+    cout << "Dimension: " << Dim << '\n';
+    cout << "Number of points: " << NPoints << '\n';
+
+    auto start = chrono::high_resolution_clock::now();
+
+    auto maxima = MAXIMA2(items, Dim);
+
+    auto stop = chrono::high_resolution_clock::now();
+
+    double elapsed = chrono::duration<double, micro>(stop - start).count();
+
+    cout << "Non-dominated points: " << maxima.size() << '\n';
+    cout << "Execution time: " << elapsed << " us\n";
+
     return 0;
-};
+}
