@@ -12,9 +12,9 @@ int main()
 
     const std::string outputDir = "../DataSets";
 
-    for (const auto& D : dimensions)
+    for (const auto& Dim : dimensions)
     {
-        std::string dimensionDirectory = outputDir + "/" + std::to_string(D) + "D_Data";
+        std::string dimensionDirectory = outputDir + "/" + std::to_string(Dim) + "D_Data";
 
         std::filesystem::create_directories(dimensionDirectory);
 
@@ -24,11 +24,11 @@ int main()
 
             std::string filename = dimensionDirectory + "/Test" + std::to_string(test + 1) + ".txt";
 
-            std::vector<Item> items = generateData(numberOfPoints, D);
+            std::vector<Item> items = generateData(numberOfPoints, Dim);
 
-            saveData(items, filename);
+            saveData(items, filename, Dim);
 
-            std::cout << "Generated and saved data for " << numberOfPoints << " items in " << D << " dimensions to " << filename << std::endl;
+            std::cout << "Generated and saved data for " << numberOfPoints << " items in " << Dim << " dimensions to " << filename << std::endl;
 
         }
 

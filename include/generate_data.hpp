@@ -6,4 +6,4 @@
 
 std::vector<Item> generateData(size_t n, size_t D);
 
-void saveData(const std::vector<Item>& items, const std::string& filename);
+void saveData(const std::vector<Item>& items, const std::string& filename, size_t dimension);

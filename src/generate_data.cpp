@@ -30,7 +30,7 @@ vector<Item> generateData(size_t n ,size_t D)
     return items;
 }
 
-void saveData(const vector<Item>& items, const string& filename)
+void saveData(const vector<Item>& items, const string& filename, size_t dimension)
 {
     ofstream file(filename);
 
@@ -40,7 +40,7 @@ void saveData(const vector<Item>& items, const string& filename)
         return;
     }
 
-    file << items.size() << endl;
+    file << dimension << " " << items.size() << endl;
 
     for (const auto& item : items)
     {
