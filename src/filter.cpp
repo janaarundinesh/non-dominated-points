@@ -25,13 +25,13 @@ std::vector<Item> FILTER2(
 
     size_t j = 0; // next Vs index to absorb
 
-    int bestX_strict = std::numeric_limits<int>::min();
+    double bestX_strict = std::numeric_limits<double>::lowest();
 
     size_t i = 0;
 
     while(i < Us.size())
     {
-        int y = Us[i].coords[1];
+        double y = Us[i].coords[1];
 
         // Absorb every v with strictly greater y into bestX_strict.
         while(j < Vs.size() && Vs[j].coords[1] > y)
@@ -40,7 +40,7 @@ std::vector<Item> FILTER2(
             j++;
         }
 
-        int bestX_eq = std::numeric_limits<int>::min();
+        double bestX_eq = std::numeric_limits<double>::lowest();
 
         size_t k = j;
 
@@ -109,7 +109,7 @@ std::vector<Item> FILTER(const std::vector<Item>& U, const std::vector<Item>& V,
     {
         // Single coordinate: u survives unless some v has coords[0] > u.coords[0]
         // (a strict improvement -- an exact tie does not dominate).
-        int maxV = V[0].coords[0];
+        double maxV = V[0].coords[0];
 
         for(const auto& v : V)
         {
@@ -143,7 +143,7 @@ std::vector<Item> FILTER(const std::vector<Item>& U, const std::vector<Item>& V,
 
     DEBUG_PRINT("PartitionV -> "<< "V1=" << V1.size()<< " V2=" << V2.size());
 
-    int threshold = ThresholdFromV1(V1,d);
+    double threshold = ThresholdFromV1(V1,d);
 
     auto [U1,U2] = SplitU(U,threshold,d);
 

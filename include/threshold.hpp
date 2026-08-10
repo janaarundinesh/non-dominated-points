@@ -3,7 +3,7 @@
 #include <vector>
 #include "item.hpp"
 
-int ThresholdFromV1(
+double ThresholdFromV1(
     const std::vector<Item>& V1,
     size_t d
 );

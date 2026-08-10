@@ -6,7 +6,7 @@ std::pair<
 >
 SplitU(
     const std::vector<Item>& U,
-    int threshold,
+    double threshold,
     size_t d
 )
 {

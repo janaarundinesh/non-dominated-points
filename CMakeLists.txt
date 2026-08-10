@@ -28,6 +28,12 @@ target_compile_options(non_dominated_points PRIVATE
 )
 
 add_executable(
+    generate_data
+    src/main_gen_data.cpp
+    src/generate_data.cpp
+)
+
+add_executable(
     validator
 
     validation/validation_main.cpp

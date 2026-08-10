@@ -2,5 +2,5 @@
 #include <vector>
  
 struct Item {
-    std::vector<int> coords; // coords[0]..coords[d-1]
+    std::vector<double> coords; // coords[0]..coords[d-1]
 };
