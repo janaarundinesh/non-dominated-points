@@ -3,10 +3,14 @@
 #include <iostream>
 #include <fstream>
 
-void initializeBenchmarkFile(
-    const std::string& filename
-)
+void initializeBenchmarkFile(const std::string& filename)
 {
+    std::ifstream existing_file(filename);
+    if (existing_file.good())
+    {
+        return;
+    }
+    
     std::ofstream file(filename);
 
     if (!file)
@@ -37,7 +41,6 @@ void saveBenchmark (
     file << results.dimensions << ","
          << results.num_points << ","
          << results.execution_time << ","
-         << results.num_non_dominated_points << '\n'
-         << '\n';
+         << results.num_non_dominated_points << '\n';
 
 }
