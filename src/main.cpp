@@ -40,22 +40,44 @@ Benchmark runBenchmark(const std::string& filename)
 
     file.close();
 
-    auto start = std::chrono::high_resolution_clock::now();
+    std::vector<double> execution_times;
+    const int repetitions = 10;
+    std::vector<Item> maxima;
 
-    auto maxima = MAXIMA2(items, dimensions);
+    for (int i = 0; i < repetitions; ++i)
+    {
+        auto start = std::chrono::high_resolution_clock::now();
 
-    auto stop = std::chrono::high_resolution_clock::now();
+        maxima = MAXIMA2(items, dimensions);
 
-    double execution_time =
-        std::chrono::duration<double, std::micro>(
-            stop - start
-        ).count();
+        auto stop = std::chrono::high_resolution_clock::now();
+
+        double execution_time =
+            std::chrono::duration<double, std::micro>(
+                stop - start
+            ).count();
+
+        execution_times.push_back(execution_time);
+    }
+
+    // Calculate the median execution time
+    std::sort(execution_times.begin(), execution_times.end());
+
+    double median_time;
+    if (repetitions % 2 == 0)
+    {
+        median_time = (execution_times[repetitions / 2 - 1] + execution_times[repetitions / 2]) / 2.0;
+    }
+    else
+    {
+        median_time = execution_times[repetitions / 2];
+    }
 
     Benchmark result;
 
     result.dimensions = dimensions;
     result.num_points = num_points;
-    result.execution_time = execution_time;
+    result.execution_time = median_time;
     result.num_non_dominated_points = maxima.size();
 
     return result;
