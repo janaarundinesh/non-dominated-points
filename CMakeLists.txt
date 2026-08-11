@@ -9,7 +9,7 @@ include_directories(include)
 add_executable(
     non_dominated_points
     src/main.cpp
-    src/generate_data.cpp
+    src/benchmark.cpp
     src/print.cpp
     src/sorting.cpp
     src/dominance.cpp
@@ -28,6 +28,14 @@ target_compile_options(non_dominated_points PRIVATE
 )
 
 add_executable(
+    brute_force
+    src/main_bruteforce.cpp
+    src/benchmark.cpp
+    src/brute_force_maxima.cpp
+    src/dominance.cpp
+)
+
+add_executable(
     generate_data
     src/main_gen_data.cpp
     src/generate_data.cpp
@@ -38,7 +46,6 @@ add_executable(
 
     validation/validation_main.cpp
     validation/validator.cpp
-
     src/print.cpp
     src/maxima2.cpp
     src/brute_force_maxima.cpp

@@ -1,13 +1,12 @@
-#include <iostream>
-#include <vector>
-#include "item.hpp"
-#include "print.hpp"
-#include "maxima2.hpp"
 #include "benchmark.hpp"
-#include <algorithm>
+#include "brute_force_maxima.hpp"
+#include "item.hpp"
+
 #include <chrono>
 #include <fstream>
-#include <filesystem>
+#include <iostream>
+#include <string>
+#include <vector>
 
 Benchmark runBenchmark(const std::string& filename)
 {
@@ -42,7 +41,7 @@ Benchmark runBenchmark(const std::string& filename)
 
     auto start = std::chrono::high_resolution_clock::now();
 
-    auto maxima = MAXIMA2(items, dimensions);
+    auto maxima = BruteForceMaxima(items, dimensions);
 
     auto stop = std::chrono::high_resolution_clock::now();
 
@@ -79,7 +78,7 @@ int main(int argc, char* argv[])
         "../DataSets/" + dimension_folder;
 
     std::string output_file =
-        "../results/maxima_benchmark.csv";
+        "../results/brute_force_benchmark.csv";
 
     initializeBenchmarkFile(output_file);
 

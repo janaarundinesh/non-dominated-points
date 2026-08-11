@@ -1,0 +1,11 @@
+dimensions,num_points,execution_time,num_non_dominated_points
+10,50,386.458,48
+
+10,100,1227.71,93
+
+10,500,12673.5,422
+
+10,1000,34546.7,796
+
+10,10000,482217,5233
+
