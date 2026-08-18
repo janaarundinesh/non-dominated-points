@@ -15,8 +15,7 @@ Benchmark runBenchmark(const std::string& filename)
 
     if (!file)
     {
-        std::cerr << "Could not open dataset: "
-                  << filename << '\n';
+        std::cerr << "Could not open dataset: " << filename << '\n';
 
         return {};
     }
@@ -88,39 +87,28 @@ int main(int argc, char* argv[])
 {
     if (argc != 2)
     {
-        std::cerr << "Usage: "
-                  << argv[0]
-                  << " <dimension_folder>\n";
+        std::cerr << "Usage: " << argv[0] << " <dimension_folder>\n";
 
         return 1;
     }
 
     std::string dimension_folder = argv[1];
 
-    std::string base_directory =
-        "../DataSets/" + dimension_folder;
+    std::string base_directory = "../DataSets/" + dimension_folder;
 
-    std::string output_file =
-        "../results/maxima_benchmark.csv";
+    std::string output_file = "../results/maxima_benchmark.csv";
 
     initializeBenchmarkFile(output_file);
 
     for (int test = 1; test <= 5; ++test)
     {
-        std::string filename =
-            base_directory +
-            "/Test" +
-            std::to_string(test) +
-            ".txt";
+        std::string filename = base_directory + "/Test" + std::to_string(test) + ".txt";
 
         Benchmark result = runBenchmark(filename);
 
         saveBenchmark(result, output_file);
 
-        std::cout << "Test" << test
-                  << " completed: "
-                  << result.execution_time
-                  << " us\n";
+        std::cout << "Test" << test << " completed: " << result.execution_time << " us\n";
     }
 
     return 0;

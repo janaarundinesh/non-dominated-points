@@ -14,8 +14,7 @@ std::vector<Item> MAXIMA2(std::vector<Item> points, size_t d)
 
     size_t mid = points.size()/2;
 
-    while(mid < points.size() &&
-          points[mid].coords[d-1] == points[mid-1].coords[d-1])
+    while(mid < points.size() && points[mid].coords[d-1] == points[mid-1].coords[d-1])
     {
         mid++;
     }
