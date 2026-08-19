@@ -1,7 +1,6 @@
 #include "benchmark.hpp"
 #include "brute_force_maxima.hpp"
 #include "item.hpp"
-
 #include <chrono>
 #include <fstream>
 #include <iostream>

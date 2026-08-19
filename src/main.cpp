@@ -4,6 +4,7 @@
 #include "print.hpp"
 #include "maxima2.hpp"
 #include "benchmark.hpp"
+#include "sorting.hpp"
 #include <algorithm>
 #include <chrono>
 #include <fstream>
@@ -46,6 +47,8 @@ Benchmark runBenchmark(const std::string& filename)
     for (int i = 0; i < repetitions; ++i)
     {
         auto start = std::chrono::high_resolution_clock::now();
+
+        SortByLastCoordinate(items); // Sort points by the last coordinate
 
         maxima = MAXIMA2(items, dimensions);
 

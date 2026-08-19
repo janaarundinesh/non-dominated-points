@@ -4,7 +4,7 @@
 std::pair<std::vector<Item>,std::vector<Item>>
     PartitionV(std::vector<Item> V, size_t d)
 {
-    SortByCoordinate(V, d - 1);
+    SortByCoordinate(V, d - 1); //does this leads to any problems?
 
     size_t mid = V.size()/2;
 
