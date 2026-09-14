@@ -1,11 +1,11 @@
 #!/bin/bash
 
 mpic++ -std=c++17 \
-    mpi_brute_force.cpp \
+    mpi_ring_method.cpp \
     ../src/dominance.cpp \
     ../src/brute_force_maxima.cpp \
     -I../include \
-    -o MPI_BruteForce
+    -o MPI_RingMethod
 
 if [ $? -ne 0 ]; then
     echo "Compilation failed."
@@ -13,4 +13,6 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "Compilation successful."
-time mpirun -np 1 ./MPI_BruteForce
+for p in 1 2 4 5 8 10 16 20; do
+    mpirun -np $p ./MPI_Ring
+done

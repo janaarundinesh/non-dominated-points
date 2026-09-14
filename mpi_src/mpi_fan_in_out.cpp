@@ -134,17 +134,13 @@ int main(int argc, char** argv)
 
     if (rank == 0)
     {
-        std::string filename =
-            "../DataSets/10D_Data/Test5.txt";
+        std::string filename = "../DataSets/10D_Data/Test5.txt";
 
         std::ifstream file(filename);
 
         if (!file)
         {
-            std::cerr
-                << "Could not open dataset: "
-                << filename
-                << std::endl;
+            std::cerr << "Could not open dataset: " << filename << std::endl;
 
             MPI_Abort(MPI_COMM_WORLD, 1);
         }
