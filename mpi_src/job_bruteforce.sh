@@ -13,6 +13,6 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "Compilation successful."
-for p in 1 2 4 5 8 10 16 20; do
-    mpirun -np $p ./MPI_Ring
+for p in 1 2 4 5 8 10; do
+    time mpirun -np $p ./MPI_RingMethod
 done
