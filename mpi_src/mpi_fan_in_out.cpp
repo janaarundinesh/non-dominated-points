@@ -134,7 +134,7 @@ int main(int argc, char** argv)
 
     if (rank == 0)
     {
-        std::string filename = "../DataSets/10D_Data/Test5.txt";
+        std::string filename = "../../DataSets/10D_Data/Test.txt";
 
         std::ifstream file(filename);
 
