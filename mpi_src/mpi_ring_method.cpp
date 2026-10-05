@@ -164,6 +164,22 @@ int main(int argc, char** argv)
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+    // This ring algorithm requires an odd number of processes.
+    if (size % 2 == 0)
+    {
+        if (rank == 0)
+        {
+            std::cerr << "Error: This ring algorithm requires an odd number " << "of processes." << std::endl;
+            std::cerr << "Please run with 3, 5, 7, 9, ... processes." << std::endl;
+        }
+
+        MPI_Finalize();
+        return 1;
+    }
+
     uint64_t dimensions = 0;
     uint64_t num_points = 0;
 
@@ -173,7 +189,7 @@ int main(int argc, char** argv)
 
     if (rank == 0)
     {
-        std::string filename = "../../DataSets/10D_Data/Test6.txt";
+        std::string filename = "../../DataSets/10D_Data/Test5.txt";
 
         std::ifstream file(filename);
 
@@ -287,7 +303,7 @@ int main(int argc, char** argv)
 
     std::vector<Item> outgoing = local_maxima;
 
-    for (int hop = 0; hop < size - 1; ++hop)
+    for (int hop = 0; hop < (size - 1)/2; ++hop)
     {
         // ----------------------------------------------------
         // Exchange sizes first
