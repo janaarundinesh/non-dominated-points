@@ -25,8 +25,8 @@ def generate_test_case(dimensions, num_points, filename=None):
             f.write("\n".join(lines) + "\n")
 
 
-D = 10
+D = 5
 N = 1000000
-savelocation = "./10D_Data/Test6.txt"
+savelocation = f"./{D}D_Data/Test7.txt"
 
 generate_test_case(dimensions = D, num_points = N,filename = savelocation)
