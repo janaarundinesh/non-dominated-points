@@ -4,60 +4,8 @@
 #include <cstdint>
 #include <mpi.h>
 
-struct Item {
-    std::vector<double> coords; // coords[0]..coords[d-1]
-};
-
-bool Dominates(const Item& a, const Item& b, size_t d)
-{
-    bool strict = false;
-
-    for (size_t i=0; i < d; i++)
-    {
-        if(a.coords[i] < b.coords[i])
-        {
-            return false;
-        }
-
-        if(a.coords[i] > b.coords[i])
-        {
-            strict = true;
-        }
-    }
-
-    return strict;
-}
-
-std::vector<Item> BruteForceMaxima(
-    const std::vector<Item>& points,
-    size_t d)
-{
-    std::vector<Item> result;
-
-    for (size_t i = 0; i < points.size(); ++i)
-    {
-        bool dominated = false;
-
-        for (size_t j = 0; j < points.size(); ++j)
-        {
-            if (i == j) continue;
-
-            if (Dominates(points[j], points[i], d))
-            {
-                dominated = true;
-                break;
-            }
-        }
-
-        if (!dominated)
-        {
-            result.push_back(points[i]);
-        }
-    }
-
-    return result;
-}
-
+#include "brute_force_maxima.hpp"
+#include "dominance.hpp"
 
 
 std::vector<double> FlattenItems(
@@ -164,22 +112,6 @@ int main(int argc, char** argv)
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
-
-    // This ring algorithm requires an odd number of processes.
-    if (size % 2 == 0)
-    {
-        if (rank == 0)
-        {
-            std::cerr << "Error: This ring algorithm requires an odd number " << "of processes." << std::endl;
-            std::cerr << "Please run with 3, 5, 7, 9, ... processes." << std::endl;
-        }
-
-        MPI_Finalize();
-        return 1;
-    }
-
     uint64_t dimensions = 0;
     uint64_t num_points = 0;
 
@@ -189,7 +121,7 @@ int main(int argc, char** argv)
 
     if (rank == 0)
     {
-        std::string filename = "../../DataSets/10D_Data/Test5.txt";
+        std::string filename = "../../DataSets/10D_Data/Test6.txt";
 
         std::ifstream file(filename);
 
@@ -303,7 +235,7 @@ int main(int argc, char** argv)
 
     std::vector<Item> outgoing = local_maxima;
 
-    for (int hop = 0; hop < (size - 1)/2; ++hop)
+    for (int hop = 0; hop < size - 1; ++hop)
     {
         // ----------------------------------------------------
         // Exchange sizes first
