@@ -3,8 +3,16 @@ cmake_minimum_required(VERSION 3.10)
 project(NonDominatedPoints)
 
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include_directories(include)
+
+add_compile_options(
+    -O3
+    -Wall
+    -Wextra
+    -Wpedantic
+)
 
 add_executable(
     non_dominated_points
@@ -21,11 +29,6 @@ add_executable(
     src/intersection.cpp
     src/filter.cpp
 )
-target_compile_options(non_dominated_points PRIVATE
-    -O3
-    -g
-    -fno-omit-frame-pointer
-)
 
 add_executable(
     brute_force
@@ -36,14 +39,7 @@ add_executable(
 )
 
 add_executable(
-    generate_data
-    src/main_gen_data.cpp
-    src/generate_data.cpp
-)
-
-add_executable(
     validator
-
     validation/validation_main.cpp
     validation/validator.cpp
     src/print.cpp
@@ -56,4 +52,17 @@ add_executable(
     src/threshold.cpp
     src/split_u.cpp
     src/intersection.cpp
+)
+
+# MPI
+find_package(MPI REQUIRED)
+
+add_executable(
+    MPI_Marrygomethod
+    mpi_src/mpi_marry_go_round_method.cpp
+)
+
+target_link_libraries(
+    MPI_Marrygomethod
+    PRIVATE MPI::MPI_CXX
 )

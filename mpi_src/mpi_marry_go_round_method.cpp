@@ -172,7 +172,14 @@ int main(int argc, char** argv)
 
     if (rank == 0)
     {
-        std::string filename = "../DataSets/10D_Data/Test6.txt"; // Specify the dataset file path
+        if (argc < 2)
+        {
+            std::cerr << "Usage: " << argv[0] << " <dataset_file>" << std::endl;
+            MPI_Abort(MPI_COMM_WORLD, 1);
+        }
+
+        std::string filename = argv[1];
+        //std::string filename = "../DataSets/10D_Data/Test6.txt"; // Specify the dataset file path
 
         std::ifstream file(filename);
 

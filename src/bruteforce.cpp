@@ -74,12 +74,20 @@ std::vector<double> BruteForceMaxima(
     return result;
 }
 
-int main()
+int main(int argc, char* argv[])
 {
     uint64_t dimensions = 0;
     uint64_t num_points = 0;
 
-    std::string filename = "../DataSets/10D_Data/Test6.txt"; // Specify the dataset file path
+    if (argc < 2)
+    {
+        std::cerr << "Usage: " << argv[0] << " <dataset_file>" << std::endl;
+        return 1;
+    }
+
+    std::string filename = argv[1];
+
+    //std::string filename = "../DataSets/10D_Data/Test6.txt"; // Specify the dataset file path
 
     std::ifstream file(filename);
 
