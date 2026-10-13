@@ -283,6 +283,48 @@ int main(int argc, char** argv)
     // Number of local maxima
     uint64_t local_maxima_points = local_maxima.size() / dimensions;
 
+    if (size == 1)
+    {
+        double end_time = MPI_Wtime();
+        double elapsed_time = end_time - start_time;
+
+        if (rank == 0)
+        {
+            // Save the result to the CSV file (create it if it doesn't exist,
+            // otherwise append to it)
+            std::string output_file = "../results/mpi_marry_go_round_benchmark.csv";
+    
+            bool file_exists = std::ifstream(output_file).good();
+    
+            std::ofstream out(output_file, std::ios::app);
+    
+            if (!out)
+            {
+                std::cerr << "Could not open benchmark file: "
+                        << output_file << std::endl;
+            }
+            else
+            {
+                // Write the header only when the file is newly created
+                if (!file_exists)
+                {
+                    out << "dimensions,num_points,num_processes,"
+                        << "execution_time,num_non_dominated_points\n";
+                }
+    
+                out << dimensions << ","
+                    << num_points << ","
+                    << size << ","
+                    << total_time << "," // seconds
+                    << local_maxima_points << "\n";
+    
+                out.close();
+            }
+        }
+    
+        MPI_Finalize();
+    }
+
     uint64_t first_half_points = local_maxima_points / 2;
 
     std::vector<double> first_half(
@@ -489,7 +531,7 @@ int main(int argc, char** argv)
             out << dimensions << ","
                 << num_points << ","
                 << size << ","
-                << total_time * 1e6 << "," // seconds -> microseconds
+                << total_time << "," // seconds
                 << total_non_dominated << "\n";
  
             out.close();
