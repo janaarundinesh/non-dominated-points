@@ -286,7 +286,7 @@ int main(int argc, char** argv)
     if (size == 1)
     {
         double end_time = MPI_Wtime();
-        double elapsed_time = end_time - start_time;
+        double total_time = end_time - start_time;
 
         if (rank == 0)
         {
@@ -323,6 +323,7 @@ int main(int argc, char** argv)
         }
     
         MPI_Finalize();
+        return 0;
     }
 
     uint64_t first_half_points = local_maxima_points / 2;

@@ -5,6 +5,8 @@
 
 module load mpi/openmpi/4.1.0
 
+mpic++ -std=c++17 -O2 ../mpi_src/mpi_marry_go_round_method.cpp -o MPI_Marrygomethod
+
 # Must be submitted from build/ (SLURM starts the job in the submit directory)
 if [ ! -x ./MPI_Marrygomethod ]; then
     echo "MPI_Marrygomethod not found in $(pwd). Build it with CMake and submit from build/."
