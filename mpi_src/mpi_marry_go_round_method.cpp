@@ -457,21 +457,46 @@ int main(int argc, char** argv)
     recv_counts.data(),
     recv_displacements.data(),
     MPI_DOUBLE,
-
+  
     0,
     MPI_COMM_WORLD
     );
 
     if (rank == 0)
     {
-        std::cout << "Number of processors: " << size << std::endl;
-        std::cout << "Elapsed time : " << total_time << " seconds" << std::endl;
-        std::cout << "Dimensions: " << dimensions << std::endl;
-        std::cout << "Number of points: " << num_points << std::endl;
-        std::cout << "Number of non-dominated points: " << total_non_dominated << std::endl;
+        // Save the result to the CSV file (create it if it doesn't exist,
+        // otherwise append to it)
+        std::string output_file = "../results/mpi_marry_go_round_benchmark.csv";
+ 
+        bool file_exists = std::ifstream(output_file).good();
+ 
+        std::ofstream out(output_file, std::ios::app);
+ 
+        if (!out)
+        {
+            std::cerr << "Could not open benchmark file: "
+                      << output_file << std::endl;
+        }
+        else
+        {
+            // Write the header only when the file is newly created
+            if (!file_exists)
+            {
+                out << "dimensions,num_points,num_processes,"
+                    << "execution_time,num_non_dominated_points\n";
+            }
+ 
+            out << dimensions << ","
+                << num_points << ","
+                << size << ","
+                << total_time * 1e6 << "," // seconds -> microseconds
+                << total_non_dominated << "\n";
+ 
+            out.close();
+        }
     }
-
+ 
     MPI_Finalize();
-
+ 
     return 0;
 }

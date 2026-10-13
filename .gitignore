@@ -1,4 +1,6 @@
 build/
+DataSets/
+results/
 .vscode/
 *.o
 *.exe

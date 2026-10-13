@@ -3,6 +3,7 @@
 #include "validator.hpp"
 #include "maxima2.hpp"
 #include "print.hpp"
+#include "sorting.hpp"
 
 using namespace std;
 
@@ -28,6 +29,8 @@ int main()
     for (int i = 1; i <= 13; i++)
     {
         ValidationDataset dataset = LoadDataset("../validation/test_datasets/Test" + std::to_string(i) + ".txt");
+
+        SortByLastCoordinate(dataset.inputPoints); // Sort points by the last coordinate
 
         auto maxima = MAXIMA2(dataset.inputPoints, dataset.dimension);
 
