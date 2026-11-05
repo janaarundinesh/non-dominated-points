@@ -14,6 +14,7 @@ DATA_DIR = BASE_DIR / "data"
 
 MAXIMA_CSV = RESULTS_DIR / "maxima_benchmark.csv"
 BRUTE_FORCE_CSV = RESULTS_DIR / "brute_force_benchmark.csv"
+MARRY_GO_ROUND_CSV = RESULTS_DIR / "mpi_marry_go_round_benchmark.csv"
 
 
 def require(*paths):
@@ -26,6 +27,23 @@ def require(*paths):
             "Run the Maxima_method and brute_force drivers first "
             "(see README, section 7)."
         )
+
+
+def load_parallel_benchmark(path, processes):
+    """Read the MPI benchmark CSV for one process count.
+
+    That CSV stores execution times in seconds, not microseconds, so it is
+    loaded separately from load_benchmark. One row per (dimension, N) holds the
+    median over the repetitions of that configuration.
+    """
+    frame = pd.read_csv(path)
+    frame = frame[frame["num_processes"] == processes]
+
+    return (
+        frame.groupby(["dimensions", "num_points"], as_index=False)
+        .agg(execution_time_s=("execution_time", "median"))
+        .sort_values("num_points")
+    )
 
 
 def load_benchmark(path):
