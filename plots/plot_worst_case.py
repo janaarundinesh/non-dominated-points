@@ -6,12 +6,15 @@ neither algorithm can discard anything.
 
 Two panels instead of three:
 
-* the antichain runtime of both algorithms in the highest dimension,
+* the antichain runtime of all three programs in the highest dimension,
 * how much slower MAXIMA2 is on the antichain than on uniform data of the same
-  size, one line per dimension.
+  size, one line per dimension,
+* where the MPI time goes as the process count rises, which is where the gather
+  takes over.
 
-Data comes from scripts/worst_case_sweep.sh (plots/data/worst_case_all_maxima.csv)
-plus the ordinary benchmark CSVs for the uniform comparison.
+Data comes from scripts/worst_case_sweep.sh (plots/data/worst_case_all_maxima.csv),
+scripts/worst_case_mpi_sweep.py (plots/data/worst_case_mpi_scaling.csv) and the
+ordinary benchmark CSVs for the uniform comparison.
 """
 
 import math
@@ -31,6 +34,7 @@ from benchmark_data import (
 
 
 WORST_CASE_CSV = DATA_DIR / "worst_case_all_maxima.csv"
+SCALING_CSV = DATA_DIR / "worst_case_mpi_scaling.csv"
 
 require(WORST_CASE_CSV, MAXIMA_CSV, BRUTE_FORCE_CSV)
 
@@ -60,7 +64,7 @@ mpi = worst[worst["algorithm"] == "mpi_marry_go_round"]
 
 MPI_PROCESSES = 8
 
-figure, (curves, penalty) = plt.subplots(1, 2, figsize=(13, 5))
+figure, (curves, penalty, scaling) = plt.subplots(1, 3, figsize=(19, 5))
 
 # ---------------------------------------------------------------------------
 # 1. Runtime on the antichain in the highest dimension.
@@ -136,6 +140,63 @@ penalty.set_ylabel("Antichain time / uniform time")
 penalty.set_title("MAXIMA2 cost on the antichain")
 penalty.grid(True, which="both", linestyle=":", alpha=0.5)
 penalty.legend(title="Dimension", ncol=2)
+
+# ---------------------------------------------------------------------------
+# 3. Where the MPI time goes as the process count rises.
+# ---------------------------------------------------------------------------
+
+if SCALING_CSV.exists():
+    scaling_data = pd.read_csv(SCALING_CSV)
+
+    # Pick the largest dataset that has the full process sweep, so the panel
+    # never collapses to a single point when the biggest input was measured at
+    # one process count only.
+    counts = (
+        scaling_data.groupby(["dimensions", "num_points"])["num_processes"]
+        .nunique()
+        .reset_index(name="process_counts")
+    )
+    best = counts[counts["process_counts"] == counts["process_counts"].max()]
+    largest = best.sort_values(["dimensions", "num_points"]).iloc[-1]
+
+    shown_scaling = scaling_data[
+        (scaling_data["dimensions"] == largest["dimensions"])
+        & (scaling_data["num_points"] == largest["num_points"])
+    ].sort_values("num_processes")
+
+    for column, label, colour, marker in [
+        ("median_total_ms", "Total", "black", "s"),
+        ("median_gather_ms", "Gather", "tab:red", "o"),
+        ("median_communication_ms", "Communication", "tab:purple", "^"),
+        ("median_local_ms", "Local brute force", "tab:blue", "D"),
+    ]:
+        scaling.plot(
+            shown_scaling["num_processes"],
+            shown_scaling[column].clip(lower=1e-3) / 1000.0,
+            marker=marker,
+            markersize=5,
+            linewidth=1.8,
+            color=colour,
+            label=label,
+        )
+
+    scaling.set_xscale("log", base=2)
+    scaling.set_yscale("log")
+    scaling.set_xticks(shown_scaling["num_processes"].tolist())
+    scaling.set_xticklabels(
+        [int(p) for p in shown_scaling["num_processes"]]
+    )
+    scaling.set_xlabel("MPI processes")
+    scaling.set_ylabel("Seconds")
+    scaling.set_title(
+        f"Where the time goes ({int(largest['dimensions'])}D, "
+        f"N = {int(largest['num_points']):,})"
+    )
+    scaling.grid(True, which="both", linestyle=":", alpha=0.5)
+    scaling.legend(fontsize=8)
+else:
+    scaling.set_visible(False)
+    print(f"no {SCALING_CSV.name}; the MPI scaling panel stays empty")
 
 figure.tight_layout()
 figure.savefig(
