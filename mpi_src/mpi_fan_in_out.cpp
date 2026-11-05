@@ -1,63 +1,25 @@
-#include <iostream>
-#include <fstream>
-#include <vector>
+// Fan-out / fan-in method for the maxima problem.
+//
+// Rank 0 scatters the data, every process computes the maxima of its share, and
+// the partial results are combined up a reduction tree.
+//
+// Usage: MPI_FanInOut <dataset_file>
+
 #include <cstdint>
+#include <fstream>
+#include <iostream>
+#include <string>
+#include <vector>
+
 #include <mpi.h>
 
 #include "brute_force_maxima.hpp"
 #include "dominance.hpp"
+#include "mpi_items.hpp"
 
+namespace {
 
-// ============================================================
-// Convert Item -> flat vector
-// ============================================================
-
-std::vector<double> FlattenItems(
-    const std::vector<Item>& items,
-    size_t dimensions)
-{
-    std::vector<double> data(
-        items.size() * dimensions
-    );
-
-    for (size_t i = 0; i < items.size(); ++i)
-    {
-        for (size_t j = 0; j < dimensions; ++j)
-        {
-            data[i * dimensions + j] =
-                items[i].coords[j];
-        }
-    }
-
-    return data;
-}
-
-
-// ============================================================
-// Convert flat vector -> Item
-// ============================================================
-
-std::vector<Item> UnflattenItems(
-    const std::vector<double>& data,
-    size_t number_of_items,
-    size_t dimensions)
-{
-    std::vector<Item> items(number_of_items);
-
-    for (size_t i = 0; i < number_of_items; ++i)
-    {
-        items[i].coords.resize(dimensions);
-
-        for (size_t j = 0; j < dimensions; ++j)
-        {
-            items[i].coords[j] =
-                data[i * dimensions + j];
-        }
-    }
-
-    return items;
-}
-
+// Both inputs are individually non-dominated, so only the cross pairs matter.
 std::vector<Item> MergeMaxima(
     const std::vector<Item>& existing,
     const std::vector<Item>& incoming,
@@ -86,7 +48,7 @@ std::vector<Item> MergeMaxima(
         }
     }
 
-    // Keep incoming points that are not dominated by any (original) existing point
+    // Keep incoming points that are not dominated by any existing point
     for (const auto& n : incoming)
     {
         bool dominated = false;
@@ -109,24 +71,23 @@ std::vector<Item> MergeMaxima(
     return result;
 }
 
+} // namespace
 
 int main(int argc, char** argv)
 {
-    int rank;
-    int size;
-
     MPI_Init(&argc, &argv);
 
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    int rank = 0;
+    int world = 0;
 
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &world);
+
+    const size_t world_size = static_cast<size_t>(world);
 
     // ========================================================
     // 1. Rank 0 reads the dataset
     // ========================================================
-
-    uint64_t dimensions = 0;
-    uint64_t num_points = 0;
 
     uint64_t info[2] = {0, 0};
 
@@ -134,7 +95,14 @@ int main(int argc, char** argv)
 
     if (rank == 0)
     {
-        std::string filename = "../../DataSets/10D_Data/Test.txt";
+        if (argc < 2)
+        {
+            std::cerr << "Usage: " << argv[0] << " <dataset_file>" << std::endl;
+
+            MPI_Abort(MPI_COMM_WORLD, 1);
+        }
+
+        const std::string filename = argv[1];
 
         std::ifstream file(filename);
 
@@ -145,70 +113,51 @@ int main(int argc, char** argv)
             MPI_Abort(MPI_COMM_WORLD, 1);
         }
 
-        file >> dimensions >> num_points;
+        file >> info[0] >> info[1];
 
-        // ====================================================
-        // 2. Read all coords
-        // ====================================================
-
-        all_data.resize(num_points * dimensions);
-
-        for (uint64_t i = 0; i < num_points; ++i)
+        if (info[0] == 0)
         {
-            for (uint64_t j = 0; j < dimensions; ++j)
-            {
-                file >> all_data[
-                    i * dimensions + j
-                ];
-            }
+            std::cerr << "Dataset has no dimensions: " << filename << std::endl;
+
+            MPI_Abort(MPI_COMM_WORLD, 1);
         }
 
-        file.close();
+        all_data.resize(static_cast<size_t>(info[0] * info[1]));
 
-        info[0] = dimensions;
-        info[1] = num_points;
+        for (auto& value : all_data)
+        {
+            file >> value;
+        }
     }
 
     MPI_Bcast(info, 2, MPI_UINT64_T, 0, MPI_COMM_WORLD);
 
-    dimensions = info[0];
-    num_points = info[1];
-
+    const size_t dimensions = static_cast<size_t>(info[0]);
+    const size_t num_points = static_cast<size_t>(info[1]);
 
     // ========================================================
-    // 3. Calculate how many points each process gets
+    // 2. Calculate how many points each process gets
     // ========================================================
 
-    uint64_t base_points = num_points / size;
+    const size_t base_points = num_points / world_size;
+    const size_t remainder = num_points % world_size;
 
-    uint64_t remainder = num_points % size;
+    const size_t local_points =
+        base_points + (static_cast<size_t>(rank) < remainder ? 1 : 0);
 
-    uint64_t local_points = base_points;
+    // ========================================================
+    // 3. Prepare send counts and displacements
+    // ========================================================
 
-    if (static_cast<uint64_t>(rank) < remainder)
+    std::vector<int> send_counts(world_size); // Number of values to send to each process
+    std::vector<int> displacements(world_size); // Starting index in all_data for each process
+
+    size_t current_offset = 0;
+
+    for (size_t p = 0; p < world_size; ++p)
     {
-        local_points++;
-    }
-
-
-    // ========================================================
-    // 4. Prepare send counts and displacements
-    // ========================================================
-
-    std::vector<int> send_counts(size); // Number of values from the data to send to each process
-    std::vector<int> displacements(size); // Starting index in the all_data array for each process
-
-    uint64_t current_offset = 0;
-
-    for (int p = 0; p < size; ++p)
-    {
-        uint64_t points_for_process =
-            base_points;
-
-        if (static_cast<uint64_t>(p) < remainder)
-        {
-            points_for_process++;
-        }
+        const size_t points_for_process =
+            base_points + (p < remainder ? 1 : 0);
 
         send_counts[p] = static_cast<int>(points_for_process * dimensions);
 
@@ -217,20 +166,11 @@ int main(int argc, char** argv)
         current_offset += points_for_process;
     }
 
-
     // ========================================================
-    // 5. Allocate local data
+    // 4. Fan-out: rank 0 distributes the data
     // ========================================================
 
     std::vector<double> local_data(local_points * dimensions);
-
-
-    // ========================================================
-    // 6. FAN-OUT
-    //
-    // Rank 0 distributes the data to all processes.
-    //
-    // ========================================================
 
     MPI_Scatterv(
         all_data.data(),
@@ -246,33 +186,22 @@ int main(int argc, char** argv)
         MPI_COMM_WORLD
     );
 
-
     // ========================================================
-    // 7. Convert local flat data into Item objects
-    // ========================================================
-
-    std::vector<Item> local_items =
-        UnflattenItems(
-            local_data,
-            local_points,
-            dimensions
-        );
-
-
-    // ========================================================
-    // 8. Calculate LOCAL MAXIMA
+    // 5. Local maxima
     // ========================================================
 
-    std::vector<Item> local_maxima = BruteForceMaxima(local_items,dimensions);
+    const std::vector<Item> local_items =
+        UnflattenItems(local_data, local_points, dimensions);
 
+    std::vector<Item> local_maxima = BruteForceMaxima(local_items, dimensions);
 
     // ========================================================
-    // 9. FAN-IN
+    // 6. Fan-in over a reduction tree
     // ========================================================
 
     int step = 1;
 
-    while (step < size)
+    while (step < world)
     {
         // ----------------------------------------------------
         // RECEIVERS
@@ -280,14 +209,10 @@ int main(int argc, char** argv)
 
         if (rank % (2 * step) == 0)
         {
-            int sender = rank + step;
+            const int sender = rank + step;
 
-            if (sender < size)
+            if (sender < world)
             {
-                // =================================================
-                // Receive number of maxima
-                // =================================================
-
                 int received_count = 0;
 
                 MPI_Recv(
@@ -300,22 +225,13 @@ int main(int argc, char** argv)
                     MPI_STATUS_IGNORE
                 );
 
-
-                // =================================================
-                // Receive maxima data
-                // =================================================
-
                 std::vector<double> received_data(
-                    static_cast<size_t>(
-                        received_count
-                    ) * dimensions
+                    static_cast<size_t>(received_count) * dimensions
                 );
 
                 MPI_Recv(
                     received_data.data(),
-                    static_cast<int>(
-                        received_data.size()
-                    ),
+                    static_cast<int>(received_data.size()),
                     MPI_DOUBLE,
                     sender,
                     1,
@@ -323,13 +239,11 @@ int main(int argc, char** argv)
                     MPI_STATUS_IGNORE
                 );
 
-                std::vector<Item> received_maxima = UnflattenItems(received_data, received_count, dimensions);
-
-                // =================================================
-                // Both sides are already individually non-dominated,
-                // so only cross-compare existing vs newly received
-                // rather than re-running brute force on everything.
-                // =================================================
+                const std::vector<Item> received_maxima = UnflattenItems(
+                    received_data,
+                    static_cast<size_t>(received_count),
+                    dimensions
+                );
 
                 local_maxima = MergeMaxima(local_maxima, received_maxima, dimensions);
             }
@@ -341,14 +255,12 @@ int main(int argc, char** argv)
 
         else
         {
-            int receiver = rank - step;
+            const int receiver = rank - step;
 
-            int count =
-                static_cast<int>(
-                    local_maxima.size()
-                );
+            const int count = static_cast<int>(local_maxima.size());
 
-            std::vector<double> maxima_data = FlattenItems(local_maxima, dimensions);
+            const std::vector<double> maxima_data =
+                FlattenItems(local_maxima, dimensions);
 
             MPI_Request requests[2];
 
@@ -364,9 +276,7 @@ int main(int argc, char** argv)
 
             MPI_Isend(
                 maxima_data.data(),
-                static_cast<int>(
-                    maxima_data.size()
-                ),
+                static_cast<int>(maxima_data.size()),
                 MPI_DOUBLE,
                 receiver,
                 1,
@@ -384,7 +294,7 @@ int main(int argc, char** argv)
 
     if (rank == 0)
     {
-        std::cout << "\nNumber of processes: " << size << std::endl;
+        std::cout << "\nNumber of processes: " << world << std::endl;
 
         std::cout << "\nInitial number of points: " << num_points << std::endl;
 

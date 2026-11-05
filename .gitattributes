@@ -1,0 +1,11 @@
+# Normalize all text files to LF so that diffs and merges are not polluted by
+# line-ending changes.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.pdf binary
+
+# Generated benchmark inputs are large text files; never diff them.
+DataSets/** -diff -text

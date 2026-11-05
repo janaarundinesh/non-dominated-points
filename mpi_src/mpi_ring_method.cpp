@@ -1,56 +1,26 @@
-#include <iostream>
-#include <fstream>
-#include <vector>
+// Ring (round-robin) method for the maxima problem.
+//
+// Every process computes the maxima of its share of the data, then tokens of
+// candidate points travel once around the ring. A point that survives every
+// process is a maximum of the whole set.
+//
+// Usage: MPI_Ringmethod <dataset_file>
+
 #include <cstdint>
+#include <fstream>
+#include <iostream>
+#include <string>
+#include <vector>
+
 #include <mpi.h>
 
 #include "brute_force_maxima.hpp"
 #include "dominance.hpp"
+#include "mpi_items.hpp"
 
+namespace {
 
-std::vector<double> FlattenItems(
-    const std::vector<Item>& items,
-    size_t dimensions)
-{
-    std::vector<double> data(
-        items.size() * dimensions
-    );
-
-    for (size_t i = 0; i < items.size(); ++i)
-    {
-        for (size_t j = 0; j < dimensions; ++j)
-        {
-            data[i * dimensions + j] =
-                items[i].coords[j];
-        }
-    }
-
-    return data;
-}
-
-
-
-std::vector<Item> UnflattenItems(
-    const std::vector<double>& data,
-    size_t number_of_items,
-    size_t dimensions)
-{
-    std::vector<Item> items(number_of_items);
-
-    for (size_t i = 0; i < number_of_items; ++i)
-    {
-        items[i].coords.resize(dimensions);
-
-        for (size_t j = 0; j < dimensions; ++j)
-        {
-            items[i].coords[j] =
-                data[i * dimensions + j];
-        }
-    }
-
-    return items;
-}
-
+// Removes the points of `local` that `incoming` dominates and vice versa.
 void CrossFilter(
     std::vector<Item>& local,
     std::vector<Item>& incoming,
@@ -101,19 +71,19 @@ void CrossFilter(
     incoming = std::move(surviving_incoming);
 }
 
+} // namespace
 
 int main(int argc, char** argv)
 {
-    int rank;
-    int size;
-
     MPI_Init(&argc, &argv);
 
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    int rank = 0;
+    int world = 0;
 
-    uint64_t dimensions = 0;
-    uint64_t num_points = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &world);
+
+    const size_t world_size = static_cast<size_t>(world);
 
     uint64_t info[2] = {0, 0};
 
@@ -121,7 +91,14 @@ int main(int argc, char** argv)
 
     if (rank == 0)
     {
-        std::string filename = "../../DataSets/10D_Data/Test6.txt";
+        if (argc < 2)
+        {
+            std::cerr << "Usage: " << argv[0] << " <dataset_file>" << std::endl;
+
+            MPI_Abort(MPI_COMM_WORLD, 1);
+        }
+
+        const std::string filename = argv[1];
 
         std::ifstream file(filename);
 
@@ -132,65 +109,51 @@ int main(int argc, char** argv)
             MPI_Abort(MPI_COMM_WORLD, 1);
         }
 
-        file >> dimensions >> num_points;
+        file >> info[0] >> info[1];
 
-        all_data.resize(num_points * dimensions);
-
-        for (uint64_t i = 0; i < num_points; ++i)
+        if (info[0] == 0)
         {
-            for (uint64_t j = 0; j < dimensions; ++j)
-            {
-                file >> all_data[
-                    i * dimensions + j
-                ];
-            }
+            std::cerr << "Dataset has no dimensions: " << filename << std::endl;
+
+            MPI_Abort(MPI_COMM_WORLD, 1);
         }
 
-        file.close();
+        all_data.resize(static_cast<size_t>(info[0] * info[1]));
 
-        info[0] = dimensions;
-        info[1] = num_points;
+        for (auto& value : all_data)
+        {
+            file >> value;
+        }
     }
 
     MPI_Bcast(info, 2, MPI_UINT64_T, 0, MPI_COMM_WORLD);
 
-    dimensions = info[0];
-    num_points = info[1];
-
+    const size_t dimensions = static_cast<size_t>(info[0]);
+    const size_t num_points = static_cast<size_t>(info[1]);
 
     // ========================================================
     // Calculate how many points each process gets
     // ========================================================
 
-    uint64_t base_points = num_points / size;
+    const size_t base_points = num_points / world_size;
+    const size_t remainder = num_points % world_size;
 
-    uint64_t remainder = num_points % size;
-
-    uint64_t local_points = base_points;
-
-    if (static_cast<uint64_t>(rank) < remainder)
-    {
-        local_points++;
-    }
-
+    const size_t local_points =
+        base_points + (static_cast<size_t>(rank) < remainder ? 1 : 0);
 
     // ========================================================
     // Prepare send counts and displacements
     // ========================================================
 
-    std::vector<int> send_counts(size); // Number of values from the data to send to each process
-    std::vector<int> displacements(size); // Starting index in the all_data array for each process
+    std::vector<int> send_counts(world_size); // Number of values to send to each process
+    std::vector<int> displacements(world_size); // Starting index in all_data for each process
 
-    uint64_t current_offset = 0;
+    size_t current_offset = 0;
 
-    for (int p = 0; p < size; ++p)
+    for (size_t p = 0; p < world_size; ++p)
     {
-        uint64_t points_for_process = base_points;
-
-        if (static_cast<uint64_t>(p) < remainder)
-        {
-            points_for_process++;
-        }
+        const size_t points_for_process =
+            base_points + (p < remainder ? 1 : 0);
 
         send_counts[p] = static_cast<int>(points_for_process * dimensions);
 
@@ -216,32 +179,26 @@ int main(int argc, char** argv)
     );
 
     std::vector<Item> local_items =
-        UnflattenItems(
-            local_data,
-            local_points,
-            dimensions
-        );
-
+        UnflattenItems(local_data, local_points, dimensions);
 
     std::vector<Item> local_maxima = BruteForceMaxima(local_items, dimensions);
-
 
     // ========================================================
     // ROUND-ROBIN RING
     // ========================================================
 
-    int next_rank = (rank + 1) % size;
-    int prev_rank = (rank - 1 + size) % size;
+    const int next_rank = (rank + 1) % world;
+    const int prev_rank = (rank - 1 + world) % world;
 
     std::vector<Item> outgoing = local_maxima;
 
-    for (int hop = 0; hop < size - 1; ++hop)
+    for (int hop = 0; hop < world - 1; ++hop)
     {
         // ----------------------------------------------------
         // Exchange sizes first
         // ----------------------------------------------------
 
-        int send_count = static_cast<int>(outgoing.size());
+        const int send_count = static_cast<int>(outgoing.size());
         int recv_count = 0;
 
         MPI_Sendrecv(
@@ -254,8 +211,11 @@ int main(int argc, char** argv)
         // Exchange the actual token data
         // ----------------------------------------------------
 
-        std::vector<double> send_data = FlattenItems(outgoing, dimensions);
-        std::vector<double> recv_data(static_cast<size_t>(recv_count) * dimensions);
+        const std::vector<double> send_data = FlattenItems(outgoing, dimensions);
+
+        std::vector<double> recv_data(
+            static_cast<size_t>(recv_count) * dimensions
+        );
 
         MPI_Sendrecv(
             send_data.data(),
@@ -269,7 +229,11 @@ int main(int argc, char** argv)
             MPI_COMM_WORLD, MPI_STATUS_IGNORE
         );
 
-        std::vector<Item> incoming = UnflattenItems(recv_data, recv_count, dimensions);
+        std::vector<Item> incoming = UnflattenItems(
+            recv_data,
+            static_cast<size_t>(recv_count),
+            dimensions
+        );
 
         // ----------------------------------------------------
         // Decide both directions of domination in one pass,
@@ -281,11 +245,11 @@ int main(int argc, char** argv)
         outgoing = incoming;
     }
 
-    int local_count = static_cast<int>(local_maxima.size());
     std::vector<double> local_flat = FlattenItems(local_maxima, dimensions);
-    int local_value_count = static_cast<int>(local_flat.size());
 
-    std::vector<int> gather_counts(size);
+    const int local_value_count = static_cast<int>(local_flat.size());
+
+    std::vector<int> gather_counts(world_size);
 
     MPI_Gather(
         &local_value_count, 1, MPI_INT,
@@ -293,23 +257,23 @@ int main(int argc, char** argv)
         0, MPI_COMM_WORLD
     );
 
-    std::vector<int> gather_displacements(size);
+    std::vector<int> gather_displacements(world_size);
     std::vector<double> gathered_data;
 
     if (rank == 0)
     {
         gather_displacements[0] = 0;
 
-        for (int p = 1; p < size; ++p)
+        for (size_t p = 1; p < world_size; ++p)
         {
             gather_displacements[p] =
                 gather_displacements[p - 1] + gather_counts[p - 1];
         }
 
-        int total_values =
-            gather_displacements[size - 1] + gather_counts[size - 1];
-
-        gathered_data.resize(total_values);
+        gathered_data.resize(
+            static_cast<size_t>(gather_displacements[world_size - 1]) +
+            static_cast<size_t>(gather_counts[world_size - 1])
+        );
     }
 
     MPI_Gatherv(
@@ -325,9 +289,9 @@ int main(int argc, char** argv)
 
     if (rank == 0)
     {
-        uint64_t total_maxima_points = static_cast<uint64_t>(gathered_data.size()) / dimensions;
+        const size_t total_maxima_points = gathered_data.size() / dimensions;
 
-        std::cout << "\nNumber of processes: " << size << std::endl;
+        std::cout << "\nNumber of processes: " << world << std::endl;
 
         std::cout << "\nInitial number of points: " << num_points << std::endl;
 

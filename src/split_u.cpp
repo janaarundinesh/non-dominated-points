@@ -1,29 +1,17 @@
 #include "split_u.hpp"
 
-std::pair<
-    std::vector<Item>,
-    std::vector<Item>
->
-SplitU(
-    const std::vector<Item>& U,
-    double threshold,
-    size_t d
-)
+#include <algorithm>
+
+size_t SplitU(Item* points, size_t count, double threshold, size_t d)
 {
-    std::vector<Item> U1;
-    std::vector<Item> U2;
-
-    for(const auto& p : U)
-    {
-        if(p.coords[d-1] <= threshold)
+    Item* const split = std::partition(
+        points,
+        points + count,
+        [threshold, d](const Item& point)
         {
-            U1.push_back(p);
+            return point.coords[d - 1] <= threshold;
         }
-        else
-        {
-            U2.push_back(p);
-        }
-    }
+    );
 
-    return {U1,U2};
+    return static_cast<size_t>(split - points);
 }

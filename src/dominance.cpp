@@ -19,3 +19,16 @@ bool Dominates(const Item& a, const Item& b, size_t d)
 
     return strict;
 }
+
+bool WeaklyDominates(const Item& a, const Item& b, size_t d)
+{
+    for (size_t i = 0; i < d; i++)
+    {
+        if(a.coords[i] < b.coords[i])
+        {
+            return false;
+        }
+    }
+
+    return true;
+}

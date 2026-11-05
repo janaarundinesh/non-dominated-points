@@ -1,19 +1,16 @@
 #include "threshold.hpp"
 
-double ThresholdFromV1(
-    const std::vector<Item>& V1,
-    size_t d
-)
+double ThresholdFromV1(const Item* points, size_t count, size_t d)
 {
-    double xmax = V1[0].coords[d-1];
+    double maximum = points[0].coords[d - 1];
 
-    for(const auto& p : V1)
+    for (size_t i = 1; i < count; ++i)
     {
-        if(p.coords[d-1] > xmax)
+        if (points[i].coords[d - 1] > maximum)
         {
-            xmax = p.coords[d-1];
+            maximum = points[i].coords[d - 1];
         }
     }
 
-    return xmax;
+    return maximum;
 }

@@ -1,104 +1,156 @@
 #include "validator.hpp"
 
 #include <fstream>
-#include <sstream>
 #include <iostream>
+#include <optional>
+#include <sstream>
+#include <string>
 
-ValidationDataset LoadDataset(const std::string& filename)
+namespace {
+
+// Dataset files separate sections with blank lines and '#' comments. Returns
+// the next line that carries data.
+bool NextDataLine(std::istream& file, std::string& line)
 {
-    ValidationDataset dataset;
-
-    std::ifstream file(filename);
-
-    if (!file.is_open())
+    while (std::getline(file, line))
     {
-        std::cerr << "Error opening file: "
-                  << filename << std::endl;
-        return dataset;
+        if (line.find_first_not_of(" \t\r") == std::string::npos)
+        {
+            continue;
+        }
+
+        if (line[0] == '#')
+        {
+            continue;
+        }
+
+        return true;
     }
 
+    return false;
+}
+
+std::optional<size_t> ReadCount(std::istream& file)
+{
     std::string line;
 
-    // ---------- Dimension ----------
-    while (std::getline(file, line))
+    if (!NextDataLine(file, line))
     {
-        if (!line.empty() && line[0] != '#')
-        {
-            dataset.dimension = std::stoul(line);
-            break;
-        }
+        return std::nullopt;
     }
 
-    // ---------- Number of Input Points ----------
-    size_t inputCount = 0;
+    std::istringstream fields(line);
+    size_t value = 0;
 
-    while (std::getline(file, line))
+    if (!(fields >> value))
     {
-        if (!line.empty() && line[0] != '#')
-        {
-            inputCount = std::stoul(line);
-            break;
-        }
+        return std::nullopt;
     }
 
-    // ---------- Input Points ----------
-    for (size_t i = 0; i < inputCount;)
+    fields >> std::ws;
+
+    if (!fields.eof())
     {
-        std::getline(file, line);
+        return std::nullopt;
+    }
 
-        if (line.empty() || line[0] == '#')
-            continue;
+    return value;
+}
 
-        std::stringstream ss(line);
+// Reads `count` point lines, each carrying exactly `dimension` coordinates.
+bool ReadPoints(
+    std::istream& file,
+    size_t dimension,
+    size_t count,
+    std::vector<Item>& points
+)
+{
+    for (size_t i = 0; i < count; ++i)
+    {
+        std::string line;
+
+        if (!NextDataLine(file, line))
+        {
+            return false;
+        }
+
+        std::istringstream fields(line);
 
         Item item;
+        double coordinate = 0.0;
 
-        int value;
-
-        while (ss >> value)
+        while (fields >> coordinate)
         {
-            item.coords.push_back(value);
+            item.coords.push_back(coordinate);
         }
 
-        dataset.inputPoints.push_back(item);
+        if (!fields.eof() || item.coords.size() != dimension)
+        {
+            return false;
+        }
 
-        i++;
+        points.push_back(item);
     }
 
-    // ---------- Number of Expected Maxima ----------
-    size_t expectedCount = 0;
+    return true;
+}
 
-    while (std::getline(file, line))
+} // namespace
+
+std::optional<ValidationDataset> LoadDataset(const std::string& filename)
+{
+    std::ifstream file(filename);
+
+    if (!file)
     {
-        if (!line.empty() && line[0] != '#')
-        {
-            expectedCount = std::stoul(line);
-            break;
-        }
+        std::cerr << "Could not open dataset: " << filename << '\n';
+
+        return std::nullopt;
     }
 
-    // ---------- Expected Maxima ----------
-    for (size_t i = 0; i < expectedCount;)
+    ValidationDataset dataset;
+
+    const std::optional<size_t> dimension = ReadCount(file);
+
+    if (!dimension || *dimension == 0)
     {
-        std::getline(file, line);
+        std::cerr << "Missing or invalid dimension: " << filename << '\n';
 
-        if (line.empty() || line[0] == '#')
-            continue;
+        return std::nullopt;
+    }
 
-        std::stringstream ss(line);
+    dataset.dimension = *dimension;
 
-        Item item;
+    const std::optional<size_t> input_count = ReadCount(file);
 
-        int value;
+    if (!input_count)
+    {
+        std::cerr << "Missing or invalid input point count: " << filename << '\n';
 
-        while (ss >> value)
-        {
-            item.coords.push_back(value);
-        }
+        return std::nullopt;
+    }
 
-        dataset.expectedMaxima.push_back(item);
+    if (!ReadPoints(file, dataset.dimension, *input_count, dataset.inputPoints))
+    {
+        std::cerr << "Malformed input points: " << filename << '\n';
 
-        i++;
+        return std::nullopt;
+    }
+
+    const std::optional<size_t> expected_count = ReadCount(file);
+
+    if (!expected_count)
+    {
+        std::cerr << "Missing or invalid expected maxima count: " << filename << '\n';
+
+        return std::nullopt;
+    }
+
+    if (!ReadPoints(file, dataset.dimension, *expected_count, dataset.expectedMaxima))
+    {
+        std::cerr << "Malformed expected maxima: " << filename << '\n';
+
+        return std::nullopt;
     }
 
     return dataset;

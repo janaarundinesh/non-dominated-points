@@ -1,12 +1,20 @@
+#include <algorithm>
 #include <iostream>
+#include <optional>
+#include <vector>
 
-#include "validator.hpp"
 #include "maxima2.hpp"
+#include "point_set.hpp"
 #include "print.hpp"
-#include "sorting.hpp"
+#include "validator.hpp"
 
-using namespace std;
+namespace {
 
+constexpr int kFirstDataset = 1;
+constexpr int kLastDataset = 16;
+
+// The maxima of a point set are an unordered set: compare as multisets rather
+// than relying on the order in which either side happens to list them.
 bool CompareMaxima(const std::vector<Item>& computed, const std::vector<Item>& expected)
 {
     if (computed.size() != expected.size())
@@ -14,49 +22,78 @@ bool CompareMaxima(const std::vector<Item>& computed, const std::vector<Item>& e
         return false;
     }
 
-    for (size_t i = 0; i < computed.size(); i++)
+    auto sorted = [](std::vector<Item> items)
     {
-        if (computed[i].coords != expected[i].coords)
-            return false;
-    }
+        std::sort(items.begin(), items.end(),
+            [](const Item& a, const Item& b)
+            {
+                return a.coords < b.coords;
+            }
+        );
 
-    return true;
+        return items;
+    };
+
+    const std::vector<Item> a = sorted(computed);
+    const std::vector<Item> b = sorted(expected);
+
+    return std::equal(a.begin(), a.end(), b.begin(),
+        [](const Item& x, const Item& y)
+        {
+            return x.coords == y.coords;
+        }
+    );
 }
+
+} // namespace
 
 int main()
 {
     int passed = 0;
-    for (int i = 1; i <= 13; i++)
+    const int total = kLastDataset - kFirstDataset + 1;
+
+    for (int i = kFirstDataset; i <= kLastDataset; i++)
     {
-        ValidationDataset dataset = LoadDataset("../validation/test_datasets/Test" + std::to_string(i) + ".txt");
+        const std::string filename =
+            "../validation/test_datasets/Test" + std::to_string(i) + ".txt";
 
-        SortByLastCoordinate(dataset.inputPoints); // Sort points by the last coordinate
+        const std::optional<ValidationDataset> dataset = LoadDataset(filename);
 
-        auto maxima = MAXIMA2(dataset.inputPoints, dataset.dimension);
-
-        if (CompareMaxima(maxima, dataset.expectedMaxima))
+        if (!dataset)
         {
-            cout << "Test Case " << i << " : PASSED\n\n";
+            std::cout << "Test Case " << i << " : SKIPPED (could not load "
+                 << filename << ")\n\n";
+
+            continue;
+        }
+
+        const PointSet set{dataset->dimension, dataset->inputPoints};
+
+        const auto maxima = MAXIMA2(set);
+
+        if (CompareMaxima(maxima, dataset->expectedMaxima))
+        {
+            std::cout << "Test Case " << i << " : PASSED\n\n";
             passed++;
         }
         else
         {
-            cout << "Test Case " << i << " : FAILED\n";
+            std::cout << "Test Case " << i << " : FAILED\n";
 
-            cout << "\nExpected Maxima\n";
-            printItems(dataset.expectedMaxima);
+            std::cout << "\nExpected Maxima\n";
+            printItems(dataset->expectedMaxima);
 
-            cout << "\nComputed Maxima\n";
+            std::cout << "\nComputed Maxima\n";
             printItems(maxima);
 
-            cout << "\n";
+            std::cout << "\n";
         }
     }
-    cout << "\n=====================================\n";
-    cout << "Validation Summary\n";
-    cout << "=====================================\n";
-    cout << "Passed : " << passed << " / 13\n";
 
+    std::cout << "\n=====================================\n";
+    std::cout << "Validation Summary\n";
+    std::cout << "=====================================\n";
+    std::cout << "Passed : " << passed << " / " << total << "\n";
 
-    return 0;
+    return passed == total ? 0 : 1;
 }

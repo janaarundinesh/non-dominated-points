@@ -1,9 +1,11 @@
 #pragma once
 
-#include <vector>
+#include <cstddef>
+
 #include "item.hpp"
 
-double ThresholdFromV1(
-    const std::vector<Item>& V1,
-    size_t d
-);
+// Largest coordinate d-1 among the first `count` points, used as the threshold
+// that separates U1 from U2.
+//
+// Precondition: count >= 1 and every point has d coordinates.
+double ThresholdFromV1(const Item* points, size_t count, size_t d);

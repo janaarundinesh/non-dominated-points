@@ -1,22 +1,33 @@
+# Build output
 build/
-DataSets/
-results/
-.vscode/
-*.o
-*.exe
-*.out
-*.obj
-*.DS_Store
-*.tex
-*.pdf
-*.dSYM
-
-__pycache__/
-
 cmake-build-debug/
 cmake-build-release/
 CMakeFiles/
 CMakeCache.txt
+compile_commands.json
 Makefile
+Testing/
 
+# Object files, libraries and binaries
+*.o
+*.obj
+*.exe
+*.out
+*.a
+*.so
+*.dylib
+*.dSYM/
+
+# Benchmark output; regenerate with the drivers
+results/
+
+# Editor and OS files
+.vscode/
 .idea/
+.DS_Store
+
+# Python
+__pycache__/
+.venv/
+
+*.log
