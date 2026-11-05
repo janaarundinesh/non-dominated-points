@@ -8,6 +8,10 @@ compile_commands.json
 Makefile
 Testing/
 
+# Data files
+*.csv
+DataSets/
+
 # Object files, libraries and binaries
 *.o
 *.obj
