@@ -21,6 +21,7 @@ DataSets/
 *.so
 *.dylib
 *.dSYM/
+*.pdf
 
 # Benchmark output; regenerate with the drivers
 results/
