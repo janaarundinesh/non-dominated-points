@@ -97,6 +97,11 @@ target_link_libraries(large_benchmark PRIVATE nondom)
 add_executable(worst_case_benchmark tools/worst_case_benchmark.cpp)
 target_link_libraries(worst_case_benchmark PRIVATE nondom)
 
+# The same antichain written out as a dataset file, so the MPI programs can be
+# measured on the identical input.
+add_executable(antichain_dataset tools/antichain_dataset.cpp)
+target_link_libraries(antichain_dataset PRIVATE nondom)
+
 # ----------------------------------------------------------------------------
 # Validation / tests
 # ----------------------------------------------------------------------------

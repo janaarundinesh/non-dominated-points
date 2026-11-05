@@ -55,6 +55,10 @@ colours = {
 
 maxima2 = worst[worst["algorithm"] == "maxima2"]
 brute = worst[worst["algorithm"] == "brute_force"]
+# Optional: written by scripts/worst_case_mpi_sweep.py.
+mpi = worst[worst["algorithm"] == "mpi_marry_go_round"]
+
+MPI_PROCESSES = 8
 
 figure, (curves, penalty) = plt.subplots(1, 2, figsize=(13, 5))
 
@@ -64,11 +68,15 @@ figure, (curves, penalty) = plt.subplots(1, 2, figsize=(13, 5))
 
 shown = dimensions[-1]
 
-for frame, label, marker, linestyle in [
-    (maxima2, "MAXIMA2", "o", "-"),
-    (brute, "brute force", "s", "--"),
+for frame, label, marker, linestyle, colour in [
+    (maxima2, "MAXIMA2", "o", "-", "tab:blue"),
+    (brute, "brute force", "s", "--", "tab:orange"),
+    (mpi, f"MPI (P={MPI_PROCESSES})", "D", "-.", "tab:green"),
 ]:
     data = frame[frame["dimensions"] == shown].sort_values("num_points")
+
+    if data.empty:
+        continue
 
     curves.plot(
         data["num_points"],
@@ -78,7 +86,7 @@ for frame, label, marker, linestyle in [
         linewidth=1.8,
         linestyle=linestyle,
         label=label,
-        color="tab:blue" if label == "MAXIMA2" else "tab:orange",
+        color=colour,
     )
 
 curves.set_xscale("log")
