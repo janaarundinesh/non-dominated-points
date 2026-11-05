@@ -113,20 +113,12 @@ $d$ & \multicolumn{3}{c}{$N = 10\,000$} & \multicolumn{3}{c}{$N = 100\,000$} & m
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=0.78\linewidth]{runtime_comparison_10D.png}
-\caption{10D with error bars spanning the minimum and maximum of the ten
-repetitions. The baseline curve excludes input handling while \code{MAXIMA2}
-includes its copy; at these sizes the difference is inside the bar.}
+\includegraphics[width=0.78\linewidth]{runtime_comparison.png}
+\caption{Runtime against input size for all six dimensions: \code{MAXIMA2}, the brute-force baseline and the MPI marry-go-round at eight processes.}
 \label{fig:runtime10}
 \end{figure}
 
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=0.78\linewidth]{algorithmic_advantage.png}
-\caption{How many times slower the baseline is. The kink between 500 and 1\,000
-points is where fixed overhead stops dominating \code{MAXIMA2}.}
-\label{fig:advantage}
-\end{figure}
+
 
 The shape of this table is easy to explain and I want to write it down properly
 because I have quoted the ratio without the explanation before. At $N=10^5$ the
@@ -141,29 +133,15 @@ Per point is the more honest way to read the growth. In 5D \code{MAXIMA2} costs
 0.36--0.41\,$\mu$s per point from 1\,000 to 100\,000 points, i.e.\ flat. In 10D
 it climbs from 0.91 to 4.77\,$\mu$s. Fitting $t \propto N^p$ over
 $N=1\,000\ldots100\,000$ gives $p = 0.95$ (5D) rising to $1.36$ (10D), against
-$1.33$--$1.89$ implied by the bound $N\log_2^{d-2}N$ over the same interval
-(Figure~\ref{fig:exponent}). On i.i.d.\ uniform data \code{FILTER} prunes far
+$1.33$--$1.89$ implied by the bound $N\log_2^{d-2}N$ over the same interval. On i.i.d.\ uniform data \code{FILTER} prunes far
 more than the worst case assumes. The bound is an upper bound on a pruning
 argument, not a forecast, and presenting it as the latter makes the
 measurements look suspiciously good. Section~\ref{sec:worstcase} is me finally
 testing that sentence instead of asserting it.
 
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=0.72\linewidth]{scaling_exponent.png}
-\caption{Measured exponent against the exponent implied by
-$N\log_2^{d-2}N$. The gap is what Section~\ref{sec:worstcase} closes part of.}
-\label{fig:exponent}
-\end{figure}
 
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=0.72\linewidth]{maxima_fraction.png}
-\caption{Share of the input that survives. At a million points in 10D the output
-is still about ten percent of the input, so large runs are partly an
-output-management problem.}
-\label{fig:fraction}
-\end{figure}
+
+
 
 About the crossover: in 5D the baseline is still 1.2$\times$ faster at $N=50$
 and $N=100$, and \code{MAXIMA2} takes the lead at $N=500$. In 6D--10D it is
@@ -198,9 +176,8 @@ $d$ & time (ms) & $p$ & peak (MB) & added (MB) & maxima \\
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=\linewidth]{memory_and_large_n.png}
-\caption{Peak memory and the memory the run adds. The added part is the working
-copy of the input: one \code{Item} per point plus its coordinate vector.}
+\includegraphics[width=\linewidth]{memory.png}
+\caption{Peak resident memory against input size, one line per dimension. The working copy of the input accounts for the growth: one \code{Item} per point plus its coordinate vector.}
 \label{fig:memory}
 \end{figure}
 
@@ -239,14 +216,7 @@ configuration & MAXIMA2 & $P=1$ & $P=2$ & $P=4$ & $P=8$ & parity at \\
 \end{tabular}
 \end{table}
 
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=\linewidth]{sequential_vs_parallel.png}
-\caption{The same three configurations as a picture. The dashed line is the
-sequential baseline measured here. In the left panel the parallel program wins,
-but $P=8$ is slower than $P=4$: each rank is left with too little work.}
-\label{fig:seqpar}
-\end{figure}
+
 
 This is the number the thesis actually needs and it had never been measured. In
 10D at 100\,000 points the parallel baseline needs 0.93\,s against 0.477\,s for
@@ -390,11 +360,8 @@ $d$ & uniform & anti- & ratio & uniform & anti- & ratio & uniform & anti- & rati
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=\linewidth]{worst_case_all_maxima.png}
-\caption{Left: runtime on the antichain for both algorithms. Middle: fitted
-exponent on the antichain next to the uniform measurement and the exponent
-implied by $N\log_2^{d-2}N$. Right: how much slower each algorithm is on the
-antichain than on the uniform dataset of the same size.}
+\includegraphics[width=\linewidth]{worst_case.png}
+\caption{Left: runtime on the antichain for both algorithms in 10D. Right: how much slower \code{MAXIMA2} is on the antichain than on uniform data of the same size, one line per dimension.}
 \label{fig:worstcase}
 \end{figure}
 

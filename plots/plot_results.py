@@ -1,3 +1,10 @@
+"""Runtime comparison of brute force, MAXIMA2 and the MPI marry-go-round.
+
+One 2x3 panel figure covers all six dimensions. Every panel carries the same
+three curves, so the figure replaces the earlier one-file-per-dimension set
+without making any single panel busier.
+"""
+
 import matplotlib.pyplot as plt
 
 from benchmark_data import (
@@ -11,8 +18,8 @@ from benchmark_data import (
 )
 
 
-# Process count drawn for the MPI marry-go-round curve; the benchmark CSV holds
-# every count from 1 to 20, and one curve keeps the comparison readable.
+# Process count drawn for the MPI curve; the benchmark CSV holds every count
+# from 1 to 20, and one curve per panel keeps the comparison readable.
 MARRY_GO_ROUND_PROCESSES = 8
 
 require(MAXIMA_CSV, BRUTE_FORCE_CSV)
@@ -35,33 +42,42 @@ else:
         "plotting MAXIMA2 and brute force only."
     )
 
+dimensions = sorted(int(d) for d in maxima["dimensions"].unique())
 
-def draw(frame, label, color):
-    plt.errorbar(
-        frame["num_points"],
-        frame["execution_time_s"],
-        yerr=[frame["lower_error"], frame["upper_error"]],
-        marker="o",
-        linewidth=2,
-        markersize=6,
-        capsize=3,
-        color=color,
-        label=label,
-    )
+figure, axes = plt.subplots(
+    2,
+    3,
+    figsize=(15, 8),
+    squeeze=False,
+    sharex=True,
+    sharey=True,
+)
 
+panels = axes.flatten()
 
-# Create one plot for each dimension
-for dim in sorted(maxima["dimensions"].unique()):
-
+for panel, dim in zip(panels, dimensions):
     maxima_subset = maxima[maxima["dimensions"] == dim].sort_values("num_points")
     brute_force_subset = brute_force[
         brute_force["dimensions"] == dim
     ].sort_values("num_points")
 
-    plt.figure(figsize=(8, 5))
+    panel.plot(
+        maxima_subset["num_points"],
+        maxima_subset["execution_time_s"],
+        marker="o",
+        linewidth=2,
+        color="tab:blue",
+        label="MAXIMA2",
+    )
 
-    draw(maxima_subset, "MAXIMA2", "tab:blue")
-    draw(brute_force_subset, "Brute Force", "tab:orange")
+    panel.plot(
+        brute_force_subset["num_points"],
+        brute_force_subset["execution_time_s"],
+        marker="o",
+        linewidth=2,
+        color="tab:orange",
+        label="Brute Force",
+    )
 
     if marry_go_round is not None:
         marry_subset = marry_go_round[
@@ -69,38 +85,51 @@ for dim in sorted(maxima["dimensions"].unique()):
         ].sort_values("num_points")
 
         if not marry_subset.empty:
-            plt.plot(
+            panel.plot(
                 marry_subset["num_points"],
                 marry_subset["execution_time_s"],
                 marker="s",
-                markersize=6,
-                linewidth=2,
                 linestyle="--",
+                linewidth=2,
                 color="tab:green",
-                label=f"MPI Marry-go-round (P={MARRY_GO_ROUND_PROCESSES})",
+                label=f"MPI (P={MARRY_GO_ROUND_PROCESSES})",
             )
 
-    plt.xscale("log")
-    plt.yscale("log")
+    panel.set_title(f"{dim}D")
+    panel.set_xscale("log")
+    panel.set_yscale("log")
+    panel.grid(True, which="both", linestyle="--", alpha=0.4)
 
-    plt.xlabel("Number of Points")
-    plt.ylabel("Execution Time (s)")
-    plt.title(f"Runtime Comparison: Brute Force vs MAXIMA2 vs MPI ({dim}D)")
+for panel in panels[len(dimensions):]:
+    panel.set_visible(False)
 
-    plt.legend()
-    plt.grid(True, which="both", linestyle="--", alpha=0.4)
+# Axis labels go on the outer panels only; the grid shares its axes.
+for panel in panels[-3:]:
+    panel.set_xlabel("Number of Points")
 
-    plt.tight_layout()
+for panel in panels[::3]:
+    panel.set_ylabel("Execution Time (s)")
 
-    # metadata={"Software": None} keeps the plotting library's name out of the
-    # PNG chunk.
-    plt.savefig(
-        FIGURES_DIR / f"runtime_comparison_{dim}D.png",
-        dpi=300,
-        metadata={"Software": None},
-    )
+handles, labels = panels[0].get_legend_handles_labels()
 
-    plt.close()
+figure.legend(
+    handles,
+    labels,
+    loc="upper center",
+    ncol=len(labels),
+    frameon=False,
+    bbox_to_anchor=(0.5, 1.0),
+)
 
+figure.suptitle("Runtime comparison over all dimensions", y=1.03)
 
-print("Plots saved successfully!")
+figure.tight_layout()
+figure.savefig(
+    FIGURES_DIR / "runtime_comparison.png",
+    dpi=300,
+    bbox_inches="tight",
+    metadata={"Software": None},
+)
+plt.close(figure)
+
+print("wrote runtime_comparison.png")

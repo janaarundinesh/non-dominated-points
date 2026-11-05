@@ -248,7 +248,7 @@ mpiexec -n 4 ./MPI_FanInOut ../DataSets/10D_Data/Test6.txt
 
 ## Experimental Results
 
-Benchmark results are written to `results/maxima_benchmark.csv` and `results/brute_force_benchmark.csv` and plotted by `plots/plot_results.py` into `plots/figures/runtime_comparison_<D>D.png`, showing execution time as a function of point count for each tested dimension. The MPI measurements are plotted by `plots/plot_mpi_results.py` into `plots/figures/speedup_all_dimensions.png`, `plots/figures/problem_size_scaling_all_processors.png` and `plots/figures/execution_time_vs_processors_all_dimensions.png`.
+Benchmark results are written to `results/maxima_benchmark.csv` and `results/brute_force_benchmark.csv` and plotted by `plots/plot_results.py` into `plots/figures/runtime_comparison.png`, one 2x3 panel figure comparing MAXIMA2, brute force and the MPI marry-go-round across the tested dimensions. `plots/plot_mpi_results.py` writes `plots/figures/speedup.png` (speedup against the one-process run at N = 10 000) and `plots/figures/scaling.png` (wall time against N at P = 8).
 
 ### In-place implementation
 
@@ -277,7 +277,7 @@ The merge itself is timed by phase: on 10D/100 000 the cross-filter stays flat a
 
 On an antichain, where every point is maximal, `MAXIMA2` is 2.6–9.7× slower than on uniform data, its growth exponent moves onto the bound (1.31–1.55 against 1.33–1.89), and the baseline becomes exactly quadratic (exponent 1.99–2.07).
 
-The figures for these statements are in [`plots/figures/`](plots/figures) (`algorithmic_advantage.png`, `scaling_exponent.png`, `maxima_fraction.png`, `sequential_vs_parallel.png`, `memory_and_large_n.png`, `mpi_time_breakdown.png`, `worst_case_all_maxima.png`), and the full discussion — including the measurement caveats and what is still missing — is in [review_report.pdf](review_report.pdf).
+The figures for these statements are in [`plots/figures/`](plots/figures) (`runtime_comparison.png`, `speedup.png`, `scaling.png`, `mpi_time_breakdown.png`, `worst_case.png`, `memory.png`), and the full discussion — including the measurement caveats and what is still missing — is in [review_report.pdf](review_report.pdf).
 
 ---
 

@@ -1,318 +1,147 @@
+"""Speedup and scaling of the MPI marry-go-round.
 
-from pathlib import Path
-import math
+Two single-panel figures from results/mpi_marry_go_round_benchmark.csv, whose
+times are in seconds:
 
-import pandas as pd
+* speedup.png -- speedup over the one-process run, one line per dimension, at a
+  fixed input size.
+* scaling.png -- wall time against N at a fixed process count, one line per
+  dimension.
+
+One panel each, rather than a 2x3 grid of panels with a dozen lines apiece.
+"""
+
 import matplotlib.pyplot as plt
+import pandas as pd
+
+from benchmark_data import FIGURES_DIR, MARRY_GO_ROUND_CSV, require
 
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+# One representative input size for speedup and one process count for scaling;
+# both fall back to the largest available value when the CSV lacks them.
+SPEEDUP_POINTS = 10_000
+SCALING_PROCESSES = 8
 
-INPUT_FILE = BASE_DIR / "results" / "mpi_marry_go_round_benchmark.csv"
-OUTPUT_DIR = Path(__file__).resolve().parent / "figures"
+require(MARRY_GO_ROUND_CSV)
 
-OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+FIGURES_DIR.mkdir(exist_ok=True)
 
-REQUIRED_COLUMNS = [
-    "dimensions",
-    "num_points",
-    "num_processes",
-    "execution_time",
-    "num_non_dominated_points",
-]
+frame = pd.read_csv(MARRY_GO_ROUND_CSV)
 
-# Must match the unit stored in the CSV.
-TIME_UNIT = "seconds"
-TIME_LABEL = f"Median Execution Time ({TIME_UNIT})"
-
-
-if not INPUT_FILE.exists():
-    raise FileNotFoundError(
-        f"CSV file not found: {INPUT_FILE}\n"
-        "Check that the CSV is inside the results directory."
-    )
-
-df = pd.read_csv(INPUT_FILE)
-
-missing_columns = set(REQUIRED_COLUMNS) - set(df.columns)
-
-if missing_columns:
-    raise ValueError(
-        f"Missing CSV columns: {sorted(missing_columns)}"
-    )
-
-for column in REQUIRED_COLUMNS:
-    df[column] = pd.to_numeric(df[column], errors="coerce")
-
-df = df.dropna(subset=REQUIRED_COLUMNS).copy()
-
-df = df[
-    (df["dimensions"] > 0)
-    & (df["num_points"] > 0)
-    & (df["num_processes"] > 0)
-    & (df["execution_time"] > 0)
+frame = frame[
+    (frame["num_points"] > 0)
+    & (frame["num_processes"] > 0)
+    & (frame["execution_time"] > 0)
 ].copy()
 
-if df.empty:
-    raise ValueError("No valid benchmark data found.")
+median = frame.groupby(
+    ["dimensions", "num_points", "num_processes"], as_index=False
+).agg(median_time=("execution_time", "median"))
 
-for column in [
-    "dimensions",
-    "num_points",
-    "num_processes",
-    "num_non_dominated_points",
-]:
-    df[column] = df[column].astype(int)
+if median.empty:
+    raise SystemExit(f"No usable rows in {MARRY_GO_ROUND_CSV}")
 
+dimensions = sorted(int(d) for d in median["dimensions"].unique())
 
-group_columns = [
-    "dimensions",
-    "num_points",
-    "num_processes",
-]
-
-median_df = (
-    df.groupby(group_columns, as_index=False)
-    .agg(
-        median_time=("execution_time", "median"),
-        repetitions=("execution_time", "count"),
-        median_non_dominated_points=(
-            "num_non_dominated_points",
-            "median",
-        ),
-    )
+available_points = sorted(int(p) for p in median["num_points"].unique())
+speedup_points = (
+    SPEEDUP_POINTS if SPEEDUP_POINTS in available_points else available_points[-1]
 )
 
-dimensions = sorted(median_df["dimensions"].unique().tolist())
-
-input_sizes = sorted(
-    median_df["num_points"].unique().tolist()
+baseline = (
+    median[median["num_processes"] == 1][
+        ["dimensions", "num_points", "median_time"]
+    ]
+    .rename(columns={"median_time": "serial_time"})
 )
 
-processors_available = sorted(
-    median_df["num_processes"].unique().tolist()
-)
+speedup = median.merge(baseline, on=["dimensions", "num_points"], how="left")
+speedup = speedup[speedup["serial_time"] > 0].copy()
+speedup["observed_speedup"] = speedup["serial_time"] / speedup["median_time"]
 
 
-baseline = median_df[
-    median_df["num_processes"] == 1
-][
-    ["dimensions", "num_points", "median_time"]
-].rename(
-    columns={"median_time": "serial_time"}
-)
-
-summary_df = median_df.merge(
-    baseline,
-    on=["dimensions", "num_points"],
-    how="left",
-)
-
-summary_df["observed_speedup"] = (
-    summary_df["serial_time"] / summary_df["median_time"]
-)
-
-summary_df["parallel_efficiency_percent"] = (
-    summary_df["observed_speedup"]
-    / summary_df["num_processes"]
-    * 100
-)
-
-summary_file = OUTPUT_DIR / "median_performance_results.csv"
-summary_df.to_csv(summary_file, index=False)
-
-def create_axes():
-    """Create a two-column subplot layout."""
-
-    count = len(dimensions)
-    rows = math.ceil(count / 2)
-
-    fig, axes = plt.subplots(
-        rows,
-        2,
-        figsize=(16, 5.5 * rows),
-        squeeze=False,
-    )
-
-    flat_axes = axes.flatten()
-
-    for ax in flat_axes[count:]:
-        ax.set_visible(False)
-
-    return fig, flat_axes[:count]
-
-
-def save_figure(fig, filename):
-    """Save a figure in the figures directory."""
-
-    output_path = OUTPUT_DIR / filename
-
-    fig.tight_layout()
-    fig.savefig(
-        output_path,
+def save(figure, filename):
+    figure.tight_layout()
+    figure.savefig(
+        FIGURES_DIR / filename,
         dpi=300,
         bbox_inches="tight",
+        metadata={"Software": None},
+    )
+    plt.close(figure)
+    print(f"wrote {filename}")
+
+
+# ---------------------------------------------------------------------------
+# Speedup at one input size.
+# ---------------------------------------------------------------------------
+
+figure, panel = plt.subplots(figsize=(8, 5))
+
+for dim in dimensions:
+    data = speedup[
+        (speedup["dimensions"] == dim) & (speedup["num_points"] == speedup_points)
+    ].sort_values("num_processes")
+
+    if data.empty:
+        continue
+
+    panel.plot(
+        data["num_processes"],
+        data["observed_speedup"],
+        marker="o",
+        markersize=5,
+        linewidth=1.8,
+        label=f"{dim}D",
     )
 
-    plt.close(fig)
+panel.axhline(1.0, color="grey", linestyle=":", linewidth=1)
+panel.set_xlabel("MPI processes")
+panel.set_ylabel("Speedup over one process")
+panel.set_title(f"Speedup on the marry-go-round, N = {speedup_points:,}")
+panel.grid(True, which="both", linestyle=":", alpha=0.5)
+panel.legend(title="Dimension", ncol=2)
+
+save(figure, "speedup.png")
 
 
-fig, axes = create_axes()
+# ---------------------------------------------------------------------------
+# Wall time against N at one process count.
+# ---------------------------------------------------------------------------
 
-for ax, dimension in zip(axes, dimensions):
-
-    dimension_df = summary_df[
-        summary_df["dimensions"] == dimension
-    ]
-
-    for n_points in sorted(
-        dimension_df["num_points"].unique()
-    ):
-
-        subset = dimension_df[
-            dimension_df["num_points"] == n_points
-        ].sort_values("num_processes")
-
-        subset = subset.dropna(
-            subset=["observed_speedup"]
-        )
-
-        if subset.empty:
-            continue
-
-        ax.plot(
-            subset["num_processes"],
-            subset["observed_speedup"],
-            marker="o",
-            markersize=4,
-            linewidth=1.6,
-            label=f"N = {n_points:,}",
-        )
-
-    ax.set_title(f"{dimension}D")
-    ax.set_xlabel("Number of Processors (P)")
-    ax.set_ylabel("Observed Speedup: T(1) / T(P)")
-
-    ax.set_xticks(processors_available)
-
-    ax.grid(
-        True,
-        which="both",
-        linestyle="--",
-        alpha=0.4,
-    )
-
-    ax.legend(
-        title="Input size",
-        fontsize=7,
-        ncol=2,
-    )
-
-save_figure(
-    fig,
-    "speedup_all_dimensions.png",
+available_processes = sorted(int(p) for p in median["num_processes"].unique())
+scaling_processes = (
+    SCALING_PROCESSES
+    if SCALING_PROCESSES in available_processes
+    else available_processes[-1]
 )
 
-fig, axes = create_axes()
+figure, panel = plt.subplots(figsize=(8, 5))
 
-for ax, dimension in zip(axes, dimensions):
+for dim in dimensions:
+    data = median[
+        (median["dimensions"] == dim)
+        & (median["num_processes"] == scaling_processes)
+    ].sort_values("num_points")
 
-    dimension_df = median_df[
-        median_df["dimensions"] == dimension
-    ]
+    if data.empty:
+        continue
 
-    for process_count in processors_available:
-
-        subset = dimension_df[
-            dimension_df["num_processes"] == process_count
-        ].sort_values("num_points")
-
-        if subset.empty:
-            continue
-
-        ax.plot(
-            subset["num_points"],
-            subset["median_time"],
-            marker="o",
-            markersize=4,
-            linewidth=1.6,
-            label=f"P = {process_count}",
-        )
-
-    ax.set_title(f"{dimension}D")
-    ax.set_xlabel("Number of Points (N)")
-    ax.set_ylabel(TIME_LABEL)
-
-    ax.set_xscale("log")
-    ax.set_yscale("log")
-
-    ax.grid(
-        True,
-        which="both",
-        linestyle="--",
-        alpha=0.4,
+    panel.plot(
+        data["num_points"],
+        data["median_time"],
+        marker="o",
+        markersize=5,
+        linewidth=1.8,
+        label=f"{dim}D",
     )
 
-    ax.legend(
-        title="Processors",
-        fontsize=8,
-        ncol=2,
-    )
+panel.set_xscale("log")
+panel.set_yscale("log")
+panel.set_xlabel("Number of Points")
+panel.set_ylabel(f"Execution Time (s), P = {scaling_processes}")
+panel.set_title("Marry-go-round runtime against input size")
+panel.grid(True, which="both", linestyle=":", alpha=0.5)
+panel.legend(title="Dimension", ncol=2)
 
-save_figure(
-    fig,
-    "problem_size_scaling_all_processors.png",
-)
-
-fig, axes = create_axes()
-
-for ax, dimension in zip(axes, dimensions):
-
-    dimension_df = median_df[
-        median_df["dimensions"] == dimension
-    ]
-
-    for n_points in sorted(
-        dimension_df["num_points"].unique()
-    ):
-
-        subset = dimension_df[
-            dimension_df["num_points"] == n_points
-        ].sort_values("num_processes")
-
-        if subset.empty:
-            continue
-
-        ax.plot(
-            subset["num_processes"],
-            subset["median_time"],
-            marker="o",
-            markersize=4,
-            linewidth=1.5,
-            label=f"N = {n_points:,}",
-        )
-
-    ax.set_title(f"{dimension}D")
-    ax.set_xlabel("Number of Processors (P)")
-    ax.set_ylabel(TIME_LABEL)
-
-    ax.set_xticks(processors_available)
-    ax.set_yscale("log")
-
-    ax.grid(
-        True,
-        which="both",
-        linestyle="--",
-        alpha=0.4,
-    )
-
-    ax.legend(
-        title="Input size",
-        fontsize=7,
-        ncol=2,
-    )
-
-save_figure(
-    fig,
-    "execution_time_vs_processors_all_dimensions.png",
-)
+save(figure, "scaling.png")
