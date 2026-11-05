@@ -53,7 +53,6 @@ non-dominated-points/
 │   └── mpi_items.hpp                  # Flat-buffer conversions shared by the MPI programs
 │
 ├── DataSets/                  # Generated benchmark inputs, grouped by dimension (5D-10D)
-│   └── create_testcases.py    # Generator for the benchmark datasets
 │
 ├── validation/
 │   ├── validator.cpp          # Loads hand-crafted test datasets
@@ -83,6 +82,7 @@ non-dominated-points/
 ├── scripts/mpi_marry_go.sh    # SLURM job script for the marry-go-round benchmark
 ├── scripts/mpi_timing_sweep.sh   # Local phase-breakdown sweep for the merge
 ├── scripts/worst_case_sweep.sh   # Antichain sweep behind the worst-case figure
+├── scripts/create_testcases.py   # Generates DataSets/ (5D-10D, Test1-Test7)
 ├── review_report.pdf          # Benchmark notes and discussion (source: .tex)
 ├── Thesis_Report.pdf
 ├── CMakeLists.txt
@@ -108,7 +108,15 @@ Points are stored as `Item` (a coordinate vector), and a `PointSet` carries its 
 
 ### 2. Random Point Generation
 
-[`DataSets/create_testcases.py`](DataSets/create_testcases.py) writes the benchmark inputs: `N` points with `D` coordinates, each drawn uniformly from `[0, 1]` and rounded to six decimals for storage. Every dimension directory contains `Test1` … `Test7` with 50, 100, 500, 1 000, 10 000, 100 000 and 1 000 000 points respectively.
+[`scripts/create_testcases.py`](scripts/create_testcases.py) writes the benchmark inputs: `N` points with `D` coordinates, each drawn uniformly from `[0, 1]` and rounded to six decimals for storage. Every dimension directory contains `Test1` … `Test7` with 50, 100, 500, 1 000, 10 000, 100 000 and 1 000 000 points respectively.
+
+The datasets are not tracked, so a fresh clone regenerates them from the repository root. A full run writes about 430 MB (the largest file is `10D_Data/Test7.txt` at 90 MB) and takes a few minutes:
+
+```bash
+python3 scripts/create_testcases.py            # all of 5D-10D, Test1-Test7
+python3 scripts/create_testcases.py --dimensions 5 --points 50 100   # a quick subset
+python3 scripts/create_testcases.py --seed 7   # reproducible values
+```
 
 ### 3. Brute-Force Maxima
 
